@@ -1,7 +1,7 @@
 # GAME MENU
 
 import pygame
-from setting import *
+from Settings import *
 
 pygame.init()
 

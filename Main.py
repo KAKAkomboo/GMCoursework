@@ -1,6 +1,6 @@
 import pygame
 from ui import Menu
-from setting import *
+from Settings import *
 
 def main():
     pygame.init()
