@@ -1,34 +1,34 @@
 import pygame
-from ui import Menu
+
 from Settings import *
+from Ui import Menu
 
 def main():
-    pygame.init()
-    screen = pygame.display.set_mode((screen_width, screen_height))
-    pygame.display.set_caption("SMTH")
+
+    menu = Menu(SCREEN)
+
     clock = pygame.time.Clock()
-
-    menu = Menu
-
     running = True
-    in_menu = True
 
     while running:
-        if in_menu:
-            choice = menu.run()
-            if choice == "start":
-                in_menu = False
-            elif choice == "options":
-                print(">>> Тут може бути меню налаштувань")
-            elif choice == "quit":
+        events = pygame.event.get()
+        for event in events:
+            if event.type == pygame.QUIT:
                 running = False
-        else:
-            for event in pygame.event.get():
-                if event.type == pygame.QUIT:
-                    running = False
-            screen.fill((0, 0, 0))
-            pygame.display.flip()
-            clock.tick(60)
+
+        action = menu.event_h(events)
+        if action == "start":
+            print("Starting the game")
+        elif action == "options":
+            print("Opening options")
+        elif action == "quit":
+            running = False
+
+        menu.update()
+        menu.draw()
+
+        pygame.display.flip()
+        clock.tick(fps)
 
     pygame.quit()
 
