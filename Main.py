@@ -1,10 +1,9 @@
 import pygame
-
 from Settings import *
-from Ui import Menu
+from Ui.Menu import *
 
 def main():
-
+    pygame.init()
     menu = Menu(SCREEN)
 
     clock = pygame.time.Clock()
@@ -16,7 +15,7 @@ def main():
             if event.type == pygame.QUIT:
                 running = False
 
-        action = menu.event_h(events)
+        action = menu.handle_ev(events)
         if action == "start":
             print("Starting the game")
         elif action == "options":
@@ -24,7 +23,6 @@ def main():
         elif action == "quit":
             running = False
 
-        menu.update()
         menu.draw()
 
         pygame.display.flip()
