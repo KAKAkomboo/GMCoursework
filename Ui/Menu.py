@@ -23,7 +23,7 @@ class Menu:
             button = Button(self.start_x, y, self.button_width, self.button_height, option)
             self.buttons.append(button)
 
-        self.title = Primary_font.render("Bebebbe", True, White_color)  # Ваш заголовок
+        self.title = Primary_font.render("Bebebbe", True, White_color)
         self.title_rect = self.title.get_rect(center=(screen_width // 2, 100))
 
     def draw(self):
@@ -134,6 +134,4 @@ class OptionsMenu:
     def _get_action(self, index):
         if index == 0:
             return "back"
-        # elif index == 1:
-        #     return "toggle_sound"  # Повертає дію для зміни звуку
         return None

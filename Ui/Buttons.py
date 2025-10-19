@@ -12,7 +12,7 @@ class Button:
         self.border_color = Black_color
         self.font = Primary_font
         self.hovered = False
-        self.border_radius = 15
+        self.border_radius = 18
 
     def draw(self, screen):
         fill_color = self.hover_color if self.hovered else self.color
