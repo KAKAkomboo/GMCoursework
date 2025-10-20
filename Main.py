@@ -10,6 +10,7 @@ running = True
 menu = Menu(screen)
 options_menu = OptionsMenu(screen)
 current_state = "menu"
+is_fullscreen = False
 
 while running:
     events = pygame.event.get()
@@ -30,6 +31,15 @@ while running:
         action = options_menu.handle_ev(events)
         if action == "back":
             current_state = "menu"
+        elif action == "toggle_fullscreen":
+            if is_fullscreen:
+                screen = pygame.display.set_mode((screen_width, screen_height))
+                is_fullscreen = False
+            else:
+                screen = pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
+                is_fullscreen = True
+            menu = Menu(screen)
+            options_menu = OptionsMenu(screen)
         options_menu.draw()
 
     pygame.display.flip()

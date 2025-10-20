@@ -97,6 +97,8 @@ class OptionsMenu:
         slider_x = (screen_width - slider_width) // 2
         self.music_slider = Slider(slider_x, 300, slider_width, slider_height, self.music_volume)
 
+        self.fullscreen_button = Button(screen_width // 2 - 100, 400, 200, 60, "Toggle Fullscreen")
+
         self.back_button = Button(screen_width // 2 - 100, 450, 200, 60, "Back")
 
         self.title = Primary_font.render("Settings", True, White_color)
@@ -111,6 +113,8 @@ class OptionsMenu:
 
         self.music_slider.draw(self.screen)
 
+        self.fullscreen_button.draw(self.screen)
+
         self.back_button.draw(self.screen)
 
 
@@ -119,6 +123,8 @@ class OptionsMenu:
         for event in events:
             self.music_slider.handle_event(event)
             self.back_button.handle_ev(event)
+            if self.fullscreen_button.handle_ev(event):
+                return "toggle_fullscreen"
 
             if event.type == pygame.MOUSEBUTTONDOWN and self.back_button.rect.collidepoint(event.pos):
                 return "back"
