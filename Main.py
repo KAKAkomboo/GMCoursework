@@ -1,6 +1,7 @@
 import pygame
 from Settings import *
 from Ui.Menu import Menu, OptionsMenu
+from game import Game
 
 pygame.init()
 screen = pygame.display.set_mode((screen_width, screen_height))
@@ -9,11 +10,21 @@ running = True
 
 menu = Menu(screen)
 options_menu = OptionsMenu(screen)
+
+mini_map = [
+    [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+    [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+    [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+    [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+    [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+]
+game = Game(screen, mini_map)
 current_state = "menu"
 is_fullscreen = False
 
 while running:
     events = pygame.event.get()
+    keys = pygame.key.get_pressed()
     for event in events:
         if event.type == pygame.QUIT:
             running = False
@@ -21,7 +32,7 @@ while running:
     if current_state == "menu":
         action = menu.handle_ev(events)
         if action == "start":
-            print("Запуск гри")
+            current_state = "game"
         elif action == "options":
             current_state = "options"
         elif action == "quit":
@@ -40,7 +51,14 @@ while running:
                 is_fullscreen = True
             menu = Menu(screen)
             options_menu = OptionsMenu(screen)
+            game = Game(screen, mini_map)
         options_menu.draw()
+    elif current_state == "game":
+        action = game.handle_events(events)
+        if action == "menu":
+            current_state = "menu"
+        game.update(keys)
+        game.draw()
 
     pygame.display.flip()
     clock.tick(60)

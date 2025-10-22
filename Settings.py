@@ -2,7 +2,7 @@ import pygame
 
 pygame.init()
 
-screen_width = 1542
+screen_width = 1540
 screen_height = 800
 SCREEN = pygame.display.set_mode((screen_width, screen_height))
 
@@ -15,7 +15,7 @@ Secondary_color = (51, 55, 84)
 
 Primary_font = pygame.font.SysFont("georgia", 40)
 
-
+tile_size = 32
 
 # pygame.init()
 # screen = pygame.display.set_mode((800, 600))

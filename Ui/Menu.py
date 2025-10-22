@@ -35,19 +35,22 @@ class Menu:
         self.screen.fill(Black_color)
         self.screen.blit(self.title, self.title_rect)
 
+        mouse_pos = pygame.mouse.get_pos()
+
         for i, button in enumerate(self.buttons):
-            if i == self.selected:
-                button.color = Secondary_color
-                button.hover_color = Primary_color
+            if button.rect.collidepoint(mouse_pos):
                 button.hovered = True
+                self.selected = i
             else:
-                button.color = Primary_color
-                button.hover_color = Secondary_color
-                button.hovered = False
+                button.hovered = (i == self.selected)
+
             button.draw(self.screen)
 
     def handle_ev(self, events):
         for event in events:
+            for button in self.buttons:
+                button.handle_ev(event)
+
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_UP:
                     self.selected = (self.selected - 1) % len(self.options)
@@ -55,21 +58,22 @@ class Menu:
                     self.selected = (self.selected + 1) % len(self.options)
                 elif event.key == pygame.K_RETURN:
                     action = self._get_action(self.selected)
-                    if action == "start" or action == "quit":
+                    if action in ["start", "quit"]:
                         pygame.mixer.music.stop()
                     return action
                 elif event.key == pygame.K_ESCAPE:
                     pygame.mixer.music.stop()
                     return "quit"
 
-            for button in self.buttons:
-                if button.handle_ev(event):
-                    idx = self.buttons.index(button)
-                    self.selected = idx
-                    action = self._get_action(idx)
-                    if action == "start" or action == "quit":
-                        pygame.mixer.music.stop()
-                    return action
+            elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+                for button in self.buttons:
+                    if button.is_clicked(event.pos):
+                        idx = self.buttons.index(button)
+                        self.selected = idx
+                        action = self._get_action(idx)
+                        if action in ["start", "quit"]:
+                            pygame.mixer.music.stop()
+                        return action
         return None
 
     def _get_action(self, index):
@@ -97,7 +101,7 @@ class OptionsMenu:
         slider_x = (screen_width - slider_width) // 2
         self.music_slider = Slider(slider_x, 300, slider_width, slider_height, self.music_volume)
 
-        self.fullscreen_button = Button(screen_width // 2 - 100, 400, 200, 60, "Toggle Fullscreen")
+        self.fullscreen_button = Button(screen_width // 2 - 150, 370, 300, 60, "Toggle Fullscreen")
 
         self.back_button = Button(screen_width // 2 - 100, 450, 200, 60, "Back")
 
@@ -122,12 +126,10 @@ class OptionsMenu:
     def handle_ev(self, events):
         for event in events:
             self.music_slider.handle_event(event)
-            self.back_button.handle_ev(event)
+            if self.back_button.handle_ev(event):
+                return "back"
             if self.fullscreen_button.handle_ev(event):
                 return "toggle_fullscreen"
-
-            if event.type == pygame.MOUSEBUTTONDOWN and self.back_button.rect.collidepoint(event.pos):
-                return "back"
         pygame.mixer.music.set_volume(self.music_slider.value)
 
         return None
