@@ -25,6 +25,11 @@ class Player:
             elif keys[pygame.K_DOWN] or keys[pygame.K_s]:
                 dy = 1
 
+            if keys[pygame.K_LSHIFT]:
+                self.speed = 1
+            else:
+                self.speed = 0.4
+
             if dx or dy:
                 new_x = self.x + dx
                 new_y = self.y + dy
