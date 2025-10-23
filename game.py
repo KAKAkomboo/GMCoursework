@@ -26,6 +26,6 @@ class Game:
         self.player.update(keys)
         self.update_camera()
     def draw(self):
-        self.screen.fill((0, 0, 0))  # Фон
+        self.screen.fill((0, 0, 0))
         self.map.draw(self.screen, self.camera_x, self.camera_y)
         self.player.draw(self.screen, self.camera_x, self.camera_y)

@@ -22,9 +22,9 @@ class Map:
                 color = self.tile_colors.get(tile_type, (0, 0, 0))
                 rect = pygame.Rect(x * tile_size - camera_x, y * tile_size - camera_y, tile_size, tile_size)
                 pygame.draw.rect(screen, color, rect)
-    def is_walkable(self, x, y):
 
+    def is_walkable(self, x, y):
         if 0 <= y < len(self.mini_map) and 0 <= x < len(self.mini_map[0]):
-            tile = self.mini_map[y][x]
+            tile = self.mini_map[int(y)][int(x)]
             return tile != 1
         return False

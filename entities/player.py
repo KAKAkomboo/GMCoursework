@@ -3,15 +3,15 @@ from Settings import tile_size
 
 class Player:
     def __init__(self, x, y, map_instance):
-        self.x = x  # Позиція у плитках
+        self.x = x
         self.y = y
         self.map = map_instance
         self.image = pygame.Surface((tile_size, tile_size + 32))
         self.image.fill((255, 0, 255))
-        self.speed = 1
+        self.speed = 0.4
         self.moving = False
         self.target_x = self.x
-        self.target_y = self.y + 32
+        self.target_y = self.y
 
     def update(self, keys):
         if not self.moving:
@@ -28,7 +28,10 @@ class Player:
             if dx or dy:
                 new_x = self.x + dx
                 new_y = self.y + dy
-                if self.map.is_walkable(new_x, new_y):
+                if (
+                        self.map.is_walkable(new_x, new_y)
+                        and self.map.is_walkable(new_x, new_y + 1)
+                ):
                     self.target_x = new_x
                     self.target_y = new_y
                     self.moving = True
