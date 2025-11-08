@@ -17,6 +17,11 @@ Primary_font = pygame.font.SysFont("georgia", 40)
 
 tile_size = 32
 
+NPC_SPEED = 1
+NPC_DIALOG_DISTANCE = 100
+DIALOG_BOX_COLOR = (50, 50, 50)
+DIALOG_TEXT_COLOR = (255, 255, 255)
+
 # pygame.init()
 # screen = pygame.display.set_mode((800, 600))
 # pygame.display.set_caption("wefwef")
