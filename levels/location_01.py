@@ -1,5 +1,6 @@
 import pygame
 from Settings import tile_size
+
 class Map:
     def __init__(self, mini_map):
         self.mini_map = mini_map

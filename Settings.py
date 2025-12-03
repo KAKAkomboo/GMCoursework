@@ -22,6 +22,8 @@ NPC_DIALOG_DISTANCE = 100
 DIALOG_BOX_COLOR = (50, 50, 50)
 DIALOG_TEXT_COLOR = (255, 255, 255)
 
+NPC_WANDER_RADIUS = 120
+
 # pygame.init()
 # screen = pygame.display.set_mode((800, 600))
 # pygame.display.set_caption("wefwef")
