@@ -3,8 +3,6 @@ from Ui.Menu import Menu, OptionsMenu
 from game import Game
 import pygame
 
-
-
 pygame.init()
 screen = pygame.display.set_mode((screen_width, screen_height))
 clock = pygame.time.Clock()
@@ -71,6 +69,7 @@ while running:
         game.draw()
         if not game.player.alive and keys[pygame.K_r]:
             game.player.restart()
+            game.reset_npcs()
     pygame.display.flip()
     clock.tick(60)
 

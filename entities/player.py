@@ -17,8 +17,12 @@ class Player:
         self.max_health = 100
         self.alive = True
         self.show_death_popup = False
+        self.death_x = self.x
+        self.death_y = self.y
 
     def update(self, keys):
+        if not self.alive:
+            return
         if not self.moving:
             dx, dy = 0, 0
             if keys[pygame.K_LEFT] or keys[pygame.K_a]:
@@ -64,10 +68,11 @@ class Player:
     def draw(self, screen, camera_x, camera_y):
         screen.blit(self.image, (self.x * tile_size - camera_x, self.y * tile_size - camera_y))
 
-        bar_width = tile_size
-        bar_height = 10
-        bar_x = self.x * tile_size - camera_x
-        bar_y = self.y * tile_size - camera_y - bar_height - 5
+        bar_width = 200
+        bar_height = 20
+        bar_x = 10
+        bar_y = 10
+
 
         pygame.draw.rect(screen, (128, 128, 128), (bar_x, bar_y, bar_width, bar_height))
         health_ratio = self.health / self.max_health
@@ -90,9 +95,18 @@ class Player:
                 self.health = 0
                 self.alive = False
                 self.show_death_popup = True
+                self.death_x = self.x
+                self.death_y = self.y
                 print("Player died!")
+        else:
+            print(f"Player took {damage} damage!")
 
     def restart(self):
         self.health = self.max_health
         self.alive = True
         self.show_death_popup = False
+        self.x = self.death_x
+        self.y = self.death_y
+        self.target_x = self.x
+        self.target_y = self.y
+        self.moving = False

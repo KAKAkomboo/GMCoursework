@@ -109,7 +109,10 @@ class NPC(pygame.sprite.Sprite):
         came_from = {start: None}
         visited = set([start])
 
-        directions = [(0, 1), (0, -1), (1, 0), (-1, 0)]
+        directions = [
+            (0, 1), (0, -1), (1, 0), (-1, 0),
+            (1, 1), (1, -1), (-1, 1), (-1, -1)
+        ]
 
         while queue:
             current = queue.popleft()
@@ -118,13 +121,19 @@ class NPC(pygame.sprite.Sprite):
 
             for dx, dy in directions:
                 neighbor = (current[0] + dx, current[1] + dy)
-                if (neighbor not in visited and
-                    0 <= neighbor[1] < len(self.game.mini_map) and
+                if (0 <= neighbor[1] < len(self.game.mini_map) and
                     0 <= neighbor[0] < len(self.game.mini_map[0]) and
                     self.game.mini_map[neighbor[1]][neighbor[0]] == 0):
-                    queue.append(neighbor)
-                    visited.add(neighbor)
-                    came_from[neighbor] = current
+                    if abs(dx) == 1 and abs(dy) == 1:
+                        adj1 = (current[0] + dx, current[1])
+                        adj2 = (current[0], current[1] + dy)
+                        if not (self.game.mini_map[adj1[1]][adj1[0]] == 0 and
+                                self.game.mini_map[adj2[1]][adj2[0]] == 0):
+                            continue
+                    if neighbor not in visited:
+                        queue.append(neighbor)
+                        visited.add(neighbor)
+                        came_from[neighbor] = current
 
         if goal not in came_from:
             return []

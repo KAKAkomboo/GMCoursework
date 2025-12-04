@@ -2,22 +2,24 @@ import pygame
 from entities.player import Player
 from levels.location_01 import Map
 from Settings import screen_width, screen_height, tile_size
-from entities.NPC import NPC
+from entities.NPC import NPC  # Import the NPC class
 
 
 class Game:
     def __init__(self, screen, mini_map):
         self.screen = screen
-        self.mini_map = mini_map  # Store mini_map for NPC access
+        self.mini_map = mini_map
         self.map = Map(mini_map)
         self.player = Player(1, 1, self.map)
         self.camera_x = 0
         self.camera_y = 0
 
         self.npc_group = pygame.sprite.Group()
+        self.initial_npc_positions = []
 
         npc1 = NPC(self, pos=(10.5, 5.5), path='', scale=1.0, animation_time=180)
         self.npc_group.add(npc1)
+        self.initial_npc_positions.append((10.5, 5.5))
 
     def update_camera(self):
         self.camera_x = self.player.x * tile_size - screen_width // 2
@@ -59,3 +61,14 @@ class Game:
             self.screen.blit(npc.image, offset_rect)
 
         self.player.draw(self.screen, self.camera_x, self.camera_y)
+
+    def reset_npcs(self):
+        for i, npc in enumerate(self.npc_group):
+            if i < len(self.initial_npc_positions):
+                npc.pos = self.initial_npc_positions[i]
+                npc.rect.center = (npc.pos[0] * tile_size, npc.pos[1] * tile_size)
+                npc.health = npc.max_health
+                npc.alive = True
+                npc.state = 'idle'
+                npc.path = []
+                npc.path_index = 0
