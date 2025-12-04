@@ -1,6 +1,7 @@
 import pygame
 from Settings import tile_size
 
+
 class Player:
     def __init__(self, x, y, map_instance):
         self.x = x
@@ -12,6 +13,10 @@ class Player:
         self.moving = False
         self.target_x = self.x
         self.target_y = self.y
+        self.health = 100
+        self.max_health = 100
+        self.alive = True
+        self.show_death_popup = False
 
     def update(self, keys):
         if not self.moving:
@@ -58,3 +63,36 @@ class Player:
 
     def draw(self, screen, camera_x, camera_y):
         screen.blit(self.image, (self.x * tile_size - camera_x, self.y * tile_size - camera_y))
+
+        bar_width = tile_size
+        bar_height = 10
+        bar_x = self.x * tile_size - camera_x
+        bar_y = self.y * tile_size - camera_y - bar_height - 5
+
+        pygame.draw.rect(screen, (128, 128, 128), (bar_x, bar_y, bar_width, bar_height))
+        health_ratio = self.health / self.max_health
+        health_color = (255 * (1 - health_ratio), 255 * health_ratio, 0)
+        pygame.draw.rect(screen, health_color, (bar_x, bar_y, bar_width * health_ratio, bar_height))
+
+        if self.show_death_popup:
+            font = pygame.font.SysFont(None, 48)
+            text = font.render("YOU DIED", True, (255, 0, 0))
+            text_rect = text.get_rect(center=(screen.get_width() // 2, screen.get_height() // 2))
+            screen.blit(text, text_rect)
+            restart_text = font.render("Press R to Restart", True, (255, 255, 255))
+            restart_rect = restart_text.get_rect(center=(screen.get_width() // 2, screen.get_height() // 2 + 50))
+            screen.blit(restart_text, restart_rect)
+
+    def take_damage(self, damage):
+        if self.alive:
+            self.health -= damage
+            if self.health <= 0:
+                self.health = 0
+                self.alive = False
+                self.show_death_popup = True
+                print("Player died!")
+
+    def restart(self):
+        self.health = self.max_health
+        self.alive = True
+        self.show_death_popup = False

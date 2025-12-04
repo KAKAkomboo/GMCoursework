@@ -2,16 +2,22 @@ import pygame
 from entities.player import Player
 from levels.location_01 import Map
 from Settings import screen_width, screen_height, tile_size
+from entities.NPC import NPC
+
 
 class Game:
     def __init__(self, screen, mini_map):
         self.screen = screen
+        self.mini_map = mini_map  # Store mini_map for NPC access
         self.map = Map(mini_map)
         self.player = Player(1, 1, self.map)
         self.camera_x = 0
         self.camera_y = 0
 
         self.npc_group = pygame.sprite.Group()
+
+        npc1 = NPC(self, pos=(10.5, 5.5), path='', scale=1.0, animation_time=180)
+        self.npc_group.add(npc1)
 
     def update_camera(self):
         self.camera_x = self.player.x * tile_size - screen_width // 2
@@ -47,5 +53,9 @@ class Game:
     def draw(self):
         self.screen.fill((0, 0, 0))
         self.map.draw(self.screen, self.camera_x, self.camera_y)
-        self.npc_group.draw(self.screen)
+
+        for npc in self.npc_group:
+            offset_rect = npc.rect.move(-self.camera_x, -self.camera_y)
+            self.screen.blit(npc.image, offset_rect)
+
         self.player.draw(self.screen, self.camera_x, self.camera_y)
