@@ -29,7 +29,7 @@ class NPC(pygame.sprite.Sprite):
 
         self.health = 100
         self.max_health = 100
-        self.speed = 0.1
+        self.speed = 0.2
         self.attack_damage = 10
         self.attack_range = 1.0
         self.vision_range = 20.0

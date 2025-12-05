@@ -9,7 +9,7 @@ class Player:
         self.map = map_instance
         self.image = pygame.Surface((tile_size, tile_size + 32))
         self.image.fill((255, 0, 255))
-        self.speed = 0.4
+        self.speed = 0.8
         self.moving = False
         self.target_x = self.x
         self.target_y = self.y
