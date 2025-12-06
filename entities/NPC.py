@@ -1,31 +1,30 @@
 import math
 import pygame
 from random import randint, choice
-from collections import deque  # For BFS queue
-
+from collections import deque
 from Settings import tile_size
 
 class NPC(pygame.sprite.Sprite):
-    def __init__(self, game, pos=(10.5, 5.5), path='', scale=1.0, animation_time=180):
+    def __init__(self, game, pos=(10.5, 5.5), scale=1.0, animation_time=180):
         super().__init__()
         self.game = game
-        self.pos = pos
-        self.scale = scale
-        self.animation_time = animation_time
+        self.pos = (float(pos[0]), float(pos[1]))
+        self.scale = float(scale)
+        self.animation_time = int(animation_time)
 
-        size = (int(tile_size * scale), int(tile_size * scale))
-        self.idle_image = [pygame.Surface(size).convert_alpha()]
-        self.walk_image = [pygame.Surface(size).convert_alpha()]
-        self.attack_image = [pygame.Surface(size).convert_alpha()]
-        self.death_image = [pygame.Surface(size).convert_alpha()]
+        size = (int(tile_size * self.scale), int(tile_size * self.scale))
+        self.idle_image = [pygame.Surface(size, pygame.SRCALPHA).convert_alpha()]
+        self.walk_image = [pygame.Surface(size, pygame.SRCALPHA).convert_alpha()]
+        self.attack_image = [pygame.Surface(size, pygame.SRCALPHA).convert_alpha()]
+        self.death_image = [pygame.Surface(size, pygame.SRCALPHA).convert_alpha()]
 
-        pygame.draw.rect(self.idle_image[0], (0, 255, 0), self.idle_image[0].get_rect())
-        pygame.draw.rect(self.walk_image[0], (0, 0, 255), self.walk_image[0].get_rect())
-        pygame.draw.rect(self.attack_image[0], (255, 0, 0), self.attack_image[0].get_rect())
-        pygame.draw.rect(self.death_image[0], (0, 0, 0), self.death_image[0].get_rect())
+        pygame.draw.rect(self.idle_image[0], (0, 200, 0), self.idle_image[0].get_rect())
+        pygame.draw.rect(self.walk_image[0], (0, 0, 200), self.walk_image[0].get_rect())
+        pygame.draw.rect(self.attack_image[0], (200, 0, 0), self.attack_image[0].get_rect())
+        pygame.draw.rect(self.death_image[0], (50, 50, 50), self.death_image[0].get_rect())
 
         self.image = self.idle_image[0]
-        self.rect = self.image.get_rect(center=(self.pos[0] * tile_size, self.pos[1] * tile_size))
+        self.rect = self.image.get_rect(center=(int(self.pos[0] * tile_size), int(self.pos[1] * tile_size)))
 
         self.health = 100
         self.max_health = 100
@@ -43,11 +42,13 @@ class NPC(pygame.sprite.Sprite):
         self.path = []
         self.path_index = 0
 
+        self.currency_reward = 10
+
     def update(self, dt=None):
         if self.alive:
             self.run_logic()
             self.animate()
-            self.rect.center = (self.pos[0] * tile_size, self.pos[1] * tile_size)
+            self.rect.center = (int(self.pos[0] * tile_size), int(self.pos[1] * tile_size))
         else:
             self.animate_death()
 
@@ -83,16 +84,12 @@ class NPC(pygame.sprite.Sprite):
             next_pos = self.path[self.path_index]
             dx = next_pos[0] - self.pos[0]
             dy = next_pos[1] - self.pos[1]
-            dist = math.sqrt(dx ** 2 + dy ** 2)
-
+            dist = math.hypot(dx, dy)
             if dist <= self.speed:
                 self.pos = (next_pos[0], next_pos[1])
                 self.path_index += 1
             else:
-                self.pos = (
-                    self.pos[0] + (dx / dist) * self.speed,
-                    self.pos[1] + (dy / dist) * self.speed
-                )
+                self.pos = (self.pos[0] + (dx / dist) * self.speed, self.pos[1] + (dy / dist) * self.speed)
 
     def attack(self):
         if self.animation_trigger:
@@ -105,6 +102,8 @@ class NPC(pygame.sprite.Sprite):
         return False
 
     def find_path(self, start, goal):
+        if start == goal:
+            return []
         queue = deque([start])
         came_from = {start: None}
         visited = set([start])
@@ -118,12 +117,11 @@ class NPC(pygame.sprite.Sprite):
             current = queue.popleft()
             if current == goal:
                 break
-
             for dx, dy in directions:
                 neighbor = (current[0] + dx, current[1] + dy)
                 if (0 <= neighbor[1] < len(self.game.mini_map) and
-                    0 <= neighbor[0] < len(self.game.mini_map[0]) and
-                    self.game.mini_map[neighbor[1]][neighbor[0]] == 0):
+                        0 <= neighbor[0] < len(self.game.mini_map[0]) and
+                        self.game.mini_map[neighbor[1]][neighbor[0]] == 0):
                     if abs(dx) == 1 and abs(dy) == 1:
                         adj1 = (current[0] + dx, current[1])
                         adj2 = (current[0], current[1] + dy)
@@ -147,10 +145,16 @@ class NPC(pygame.sprite.Sprite):
         return path[1:]
 
     def take_damage(self, damage):
+        if not self.alive:
+            return
         self.health -= damage
+        print(f"NPC at {self.pos} took {damage} damage. Remaining {self.health}")
         if self.health <= 0:
+            self.health = 0
             self.alive = False
             self.state = 'death'
+            if hasattr(self.game, "player") and hasattr(self.game.player, "add_currency"):
+                self.game.player.add_currency(self.currency_reward)
 
     def animate(self):
         now = pygame.time.get_ticks()
@@ -176,14 +180,12 @@ class NPC(pygame.sprite.Sprite):
         npc_tile = (int(self.pos[0]), int(self.pos[1]))
         directions = [(0, 1), (0, -1), (1, 0), (-1, 0)]
         possible_goals = []
-
         for dx, dy in directions:
             goal = (npc_tile[0] + dx * 2, npc_tile[1] + dy * 2)
             if (0 <= goal[1] < len(self.game.mini_map) and
-                0 <= goal[0] < len(self.game.mini_map[0]) and
-                self.game.mini_map[goal[1]][goal[0]] == 0):
+                    0 <= goal[0] < len(self.game.mini_map[0]) and
+                    self.game.mini_map[goal[1]][goal[0]] == 0):
                 possible_goals.append(goal)
-
         if possible_goals:
             goal = choice(possible_goals)
             self.path = self.find_path(npc_tile, goal)
@@ -191,7 +193,33 @@ class NPC(pygame.sprite.Sprite):
             self.state = 'walk'
 
     def interact(self):
-        print("Interacting with NPC!")
+        print("Interacting with NPC")
 
-    def draw(self, screen):
-        screen.blit(self.image, self.rect)
+    def draw_health_bar(self, screen, camera_x, camera_y):
+        if not self.alive:
+            return
+        bar_width = int(tile_size * self.scale * 0.8)
+        bar_height = max(4, int(tile_size * 0.08))
+        screen_x = int(self.pos[0] * tile_size - camera_x)
+        screen_y = int(self.pos[1] * tile_size - camera_y)
+
+        bar_x = screen_x - bar_width // 2
+        bar_y = screen_y - int(tile_size * self.scale * 0.75) - bar_height
+
+        pygame.draw.rect(screen, (50, 50, 50), (bar_x, bar_y, bar_width, bar_height))
+        health_ratio = max(0.0, min(1.0, self.health / self.max_health))
+        current_width = int(bar_width * health_ratio)
+        if health_ratio > 0.6:
+            color = (0, 255, 0)
+        elif health_ratio > 0.3:
+            color = (255, 255, 0)
+        else:
+            color = (255, 0, 0)
+        if current_width > 0:
+            pygame.draw.rect(screen, color, (bar_x, bar_y, current_width, bar_height))
+
+    def draw(self, screen, camera_x, camera_y):
+        screen_x = self.pos[0] * tile_size - camera_x - (self.rect.width / 2)
+        screen_y = self.pos[1] * tile_size - camera_y - (self.rect.height / 2)
+        screen.blit(self.image, (screen_x, screen_y))
+        self.draw_health_bar(screen, camera_x, camera_y)
