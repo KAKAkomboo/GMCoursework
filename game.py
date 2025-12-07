@@ -1,4 +1,3 @@
-# game.py
 import pygame
 from entities.player import Player
 from entities.NPC import NPC

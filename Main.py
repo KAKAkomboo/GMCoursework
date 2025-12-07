@@ -1,8 +1,11 @@
-# Main.py
 import pygame
 from Settings import screen_width, screen_height, tile_size
 from Ui.Menu import Menu, OptionsMenu
 from game import Game
+from smthForMap.Checkpoint import Checkpoint
+from smthForMap.UpgradeMenu import UpgradeMenu
+from smthForMap.SaveManager import SaveManager
+from Ui.Toast import Toast
 
 pygame.init()
 pygame.display.set_caption("Game")
@@ -12,25 +15,40 @@ running = True
 
 menu = Menu(screen)
 options_menu = OptionsMenu(screen)
-
-# Example mini_map (10 rows x 80 cols)
 mini_map = [[1] + [0] * 78 for _ in range(10)]
-
 game = Game(screen, mini_map)
 current_state = "menu"
 previous_state = None
 is_fullscreen = False
 
+checkpoint = Checkpoint(5, 5)
+upgrade_menu = UpgradeMenu()
+save_manager = SaveManager()
+toast = Toast()
+
+font = pygame.font.SysFont(None, 48)
+font_small = pygame.font.SysFont(None, 28)
+
+save_sound = None
+level_sound = None
+try:
+    pygame.mixer.init()
+    save_sound = pygame.mixer.Sound("save.wav")
+    level_sound = pygame.mixer.Sound("level.wav")
+except:
+    pass
+checkpoint.set_sounds(save_sound, level_sound)
+
 def recreate_ui_and_game(new_screen):
-    """
-    Recreate UI and game objects when the display mode changes.
-    Keeps the same mini_map and attempts to preserve game state by creating a new Game.
-    """
-    global screen, menu, options_menu, game
+    global screen, menu, options_menu, game, checkpoint
     screen = new_screen
     menu = Menu(screen)
     options_menu = OptionsMenu(screen)
     game = Game(screen, mini_map)
+    checkpoint = Checkpoint(5, 5)
+    checkpoint.set_sounds(save_sound, level_sound)
+
+save_manager.load(game.player)
 
 while running:
     events = pygame.event.get()
@@ -71,22 +89,32 @@ while running:
         shoot = False
         shoot_dir_right = True
         lock_pressed = False
+        activate_checkpoint = False
 
-        # Collect input flags
         for event in events:
             if event.type == pygame.MOUSEBUTTONDOWN:
                 if event.button == 1:
                     mouse_clicked = True
                 elif event.button == 3:
-                    shoot = True
-                    mx, my = pygame.mouse.get_pos()
-                    player_px = int(game.player.x * tile_size - game.camera_x + game.player.image.get_width() // 2)
-                    shoot_dir_right = mx >= player_px
+                    if checkpoint.menu_open or checkpoint.upgrade_open:
+                        checkpoint.close_all()
+                    else:
+                        shoot = True
+                        mx, my = pygame.mouse.get_pos()
+                        player_px = int(game.player.x * tile_size - game.camera_x + game.player.image.get_width() // 2)
+                        shoot_dir_right = mx >= player_px
             elif event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_TAB:
                     lock_pressed = True
+                elif event.key == pygame.K_e:
+                    activate_checkpoint = True
+                elif event.key == pygame.K_ESCAPE:
+                    if checkpoint.upgrade_open:
+                        checkpoint.upgrade_open = False
+                        checkpoint.menu_open = True
+                    elif checkpoint.menu_open:
+                        checkpoint.close_all()
 
-        # Let game handle higher-level events (pause/menu)
         action = game.handle_events(events)
         if action == "menu":
             current_state = "menu"
@@ -95,14 +123,41 @@ while running:
             current_state = "pause"
             previous_state = "game"
 
-        # Update game and pass input flags (game.update forwards lock_pressed to player)
-        game.update(keys, mouse_clicked=mouse_clicked, shoot=shoot, shoot_dir_right=shoot_dir_right, lock_pressed=lock_pressed)
-        game.draw()
+        if not (checkpoint.menu_open or checkpoint.upgrade_open):
+            game.update(keys, mouse_clicked=mouse_clicked, shoot=shoot, shoot_dir_right=shoot_dir_right, lock_pressed=lock_pressed)
 
-        # Restart handling when player is dead
+        checkpoint.update_active(game.player)
+        if activate_checkpoint and checkpoint.active:
+            checkpoint.open_menu(game.player)
+
+        btns = checkpoint.draw(screen, game.camera_x, game.camera_y, font, font_small)
+        if checkpoint.menu_open and not checkpoint.upgrade_open:
+            checkpoint.handle_menu_keys(game.player, keys, pygame.time.get_ticks(), toast)
+            checkpoint.handle_menu_mouse(game.player, toast, btns, pygame.time.get_ticks())
+
+        if checkpoint.upgrade_open:
+            cb, bb = upgrade_menu.draw(screen, game.player, font, font_small)
+            res = upgrade_menu.handle_input(game.player, events, keys, cb, bb, toast, level_sound)
+            if res == "close":
+                checkpoint.close_all()
+            elif res == "back":
+                checkpoint.upgrade_open = False
+                checkpoint.menu_open = True
+
+        game.draw()
+        toast.draw(screen, font_small)
+        checkpoint.draw_bonfire(screen, game.camera_x, game.camera_y)
+
         if not game.player.alive and keys[pygame.K_r]:
             game.player.restart()
             game.reset_npcs()
+
+        if not checkpoint.menu_open and not checkpoint.upgrade_open:
+            pass
+
+        if not checkpoint.menu_open and not checkpoint.upgrade_open and keys[pygame.K_F5]:
+            save_manager.save(game.player)
+            toast.show("Updated checkpoint.", 1200)
 
     elif current_state == "pause":
         for event in events:
@@ -115,8 +170,8 @@ while running:
         overlay = pygame.Surface((screen.get_width(), screen.get_height()), pygame.SRCALPHA)
         overlay.fill((0, 0, 0, 150))
         screen.blit(overlay, (0, 0))
-        font = pygame.font.SysFont(None, 48)
-        text = font.render("PAUSED - Press P to resume", True, (255, 255, 255))
+        font_pause = pygame.font.SysFont(None, 48)
+        text = font_pause.render("PAUSED - Press P to resume", True, (255, 255, 255))
         rect = text.get_rect(center=(screen.get_width() // 2, screen.get_height() // 2))
         screen.blit(text, rect)
 
