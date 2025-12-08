@@ -1,6 +1,7 @@
 import pygame
 from entities.player import Player
 from entities.NPC import NPC
+from entities.FriendlyNPC import FriendlyNPC   # <-- NEW
 from levels.location_01 import Map
 from Settings import screen_width, screen_height, tile_size
 
@@ -14,6 +15,7 @@ class Game:
         self.camera_x = 0
         self.camera_y = 0
 
+        # Hostile NPCs
         self.npc_group = pygame.sprite.Group()
         self.initial_npc_positions = []
 
@@ -22,6 +24,13 @@ class Game:
         self.npc_group.add(npc1, npc2)
         self.initial_npc_positions.append((5.5, 4.5))
         self.initial_npc_positions.append((8.5, 6.5))
+
+        # Friendly NPCs
+        self.friendly_npcs = []
+        villager = FriendlyNPC(self, name="Villager", pos=(12.5, 6.5), scale=1.0)
+        elder = FriendlyNPC(self, name="Elder", pos=(15.5, 8.5), scale=1.0)
+        self.friendly_npcs.append(villager)
+        self.friendly_npcs.append(elder)
 
     def update_camera(self):
         self.camera_x = int(self.player.x * tile_size - screen_width // 2)
@@ -54,16 +63,25 @@ class Game:
             if not npc.alive:
                 pass
 
+        # Update friendly NPCs
+        for fnpc in self.friendly_npcs:
+            fnpc.update()
+
         self.update_camera()
 
     def draw(self):
         self.screen.fill((30, 30, 30))
         self.map.draw(self.screen, self.camera_x, self.camera_y)
 
+        # Hostile NPCs
         for npc in self.npc_group:
             offset_rect = npc.rect.move(-self.camera_x, -self.camera_y)
             self.screen.blit(npc.image, offset_rect)
             npc.draw_health_bar(self.screen, self.camera_x, self.camera_y)
+
+        # Friendly NPCs
+        for fnpc in self.friendly_npcs:
+            fnpc.draw(self.screen, self.camera_x, self.camera_y)
 
         self.player.draw(self.screen, self.camera_x, self.camera_y)
 
