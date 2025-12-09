@@ -1,15 +1,12 @@
-# Ui/Menu.py
 import pygame
 from Ui.Buttons import Button
 from Ui.Slider import Slider
 from Settings import screen_width, screen_height, Primary_font, White_color, Black_color
 
-# Initialize mixer once at module import
 pygame.mixer.init()
 try:
     pygame.mixer.music.load('assets/sounds/sound_01.mp3')
 except Exception:
-    # If the file is missing or fails to load, ignore and continue
     pass
 
 
@@ -33,11 +30,9 @@ class Menu:
             button = Button(self.start_x, y, self.button_width, self.button_height, option)
             self.buttons.append(button)
 
-        # Title uses Primary_font from Settings
         self.title = Primary_font.render("Bebebbe", True, White_color)
         self.title_rect = self.title.get_rect(center=(screen_width // 2, 100))
 
-        # Start music if loaded
         try:
             pygame.mixer.music.play(-1)
         except Exception:
@@ -60,13 +55,9 @@ class Menu:
             button.draw(self.screen)
 
     def handle_ev(self, events):
-        """
-        Process events and return one of: "start", "options", "quit", or None.
-        Stops music on start/quit.
-        """
+
         action = None
         for event in events:
-            # Let buttons process the event (mouse hover/click)
             for button in self.buttons:
                 button.handle_ev(event)
 
@@ -88,7 +79,6 @@ class Menu:
                         break
 
             if action:
-                # stop music only for start or quit
                 if action in ("start", "quit"):
                     try:
                         pygame.mixer.music.stop()
@@ -113,14 +103,12 @@ class OptionsMenu:
         self.screen = screen
         self.font = pygame.font.SysFont("arial", 40)
 
-        # Music slider
         self.music_volume = 1.0
         slider_width = 300
         slider_height = 10
         slider_x = (screen_width - slider_width) // 2
         self.music_slider = Slider(slider_x, 300, slider_width, slider_height, self.music_volume)
 
-        # Fullscreen toggle and back button
         self.fullscreen_button = Button(screen_width // 2 - 150, 370, 300, 60, "Toggle Fullscreen")
         self.back_button = Button(screen_width // 2 - 100, 450, 200, 60, "Back")
 
@@ -139,10 +127,6 @@ class OptionsMenu:
         self.back_button.draw(self.screen)
 
     def handle_ev(self, events):
-        """
-        Returns "back", "toggle_fullscreen", or None.
-        Updates pygame.mixer.music volume from the slider.
-        """
         for event in events:
             self.music_slider.handle_event(event)
             if self.back_button.handle_ev(event):
@@ -150,7 +134,6 @@ class OptionsMenu:
             if self.fullscreen_button.handle_ev(event):
                 return "toggle_fullscreen"
 
-        # Apply slider value to music volume
         try:
             pygame.mixer.music.set_volume(self.music_slider.value)
         except Exception:

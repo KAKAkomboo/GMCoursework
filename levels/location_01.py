@@ -4,10 +4,6 @@ from typing import List, Optional, Tuple
 from Settings import tile_size
 
 class Map:
-    """
-    Simple tile map wrapper.
-    mini_map: 2D list of ints (0 = floor, 1 = wall, others optional).
-    """
 
     DEFAULT_TILE_COLORS = {
         0: (40, 40, 40),    # floor
@@ -58,10 +54,7 @@ class Map:
                     pygame.draw.rect(screen, (20, 20, 20), rect, 1)
 
     def is_walkable(self, x: float, y: float) -> bool:
-        """
-        Accepts tile coords (small numbers) or pixel coords (>= tile_size).
-        Returns False for out-of-bounds or tile id 1 (wall).
-        """
+
         if x >= tile_size or y >= tile_size:
             tx, ty = int(x // tile_size), int(y // tile_size)
         else:
