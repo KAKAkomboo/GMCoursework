@@ -1,19 +1,21 @@
 import pygame
 from Settings import screen_width, screen_height, tile_size
-from Ui.Menu import Menu, OptionsMenu
-from Ui.PauseMenu import PauseMenu
+from Ui.Menu.OptionsMenu import OptionsMenu
+from Ui.Menu.Menu import Menu
+from Ui.PauseMenu.PauseMenu import PauseMenu
+from Ui.PauseMenu.TaskPanel import TasksPanel
+from Ui.PauseMenu.InventoryPanel import InventoryPanel
 from game import Game
 from smthForMap.Checkpoint import Checkpoint
 from smthForMap.UpgradeMenu import UpgradeMenu
 from smthForMap.SaveManager import SaveManager
 from Ui.Toast import Toast
 
+
 pygame.init()
 pygame.display.set_caption("Game")
-
 screen = pygame.display.set_mode((screen_width, screen_height))
 clock = pygame.time.Clock()
-running = True
 
 try:
     pygame.mixer.init()
@@ -23,18 +25,15 @@ except Exception:
 menu = Menu(screen)
 options_menu = OptionsMenu(screen)
 pause_menu = PauseMenu(screen)
+tasks_panel = TasksPanel(screen)
+inventory_panel = InventoryPanel(screen)
+toast = Toast()
 
 mini_map = [[1] + [0] * 78 for _ in range(10)]
 game = Game(screen, mini_map)
-
-current_state = "menu"
-previous_state = None
-is_fullscreen = False
-
 checkpoint = Checkpoint(5, 5)
 upgrade_menu = UpgradeMenu()
 save_manager = SaveManager()
-toast = Toast()
 
 font = pygame.font.SysFont(None, 48)
 font_small = pygame.font.SysFont(None, 28)
@@ -47,23 +46,29 @@ except Exception:
     level_sound = None
 checkpoint.set_sounds(save_sound, level_sound)
 
+current_state = "menu"
+previous_state = None
+is_fullscreen = False
+
 def recreate_ui_and_game(new_screen):
-    global screen, menu, options_menu, pause_menu, game, checkpoint
+    global screen, menu, options_menu, pause_menu, tasks_panel, inventory_panel, game, checkpoint
     screen = new_screen
     menu = Menu(screen)
     options_menu = OptionsMenu(screen)
     pause_menu = PauseMenu(screen)
+    tasks_panel = TasksPanel(screen)
+    inventory_panel = InventoryPanel(screen)
     game = Game(screen, mini_map)
     checkpoint = Checkpoint(5, 5)
     checkpoint.set_sounds(save_sound, level_sound)
 
 save_manager.load(game.player)
 
+running = True
 while running:
     events = pygame.event.get()
     keys = pygame.key.get_pressed()
 
-    # Global quit
     for event in events:
         if event.type == pygame.QUIT:
             running = False
@@ -76,6 +81,7 @@ while running:
         elif action == "options":
             current_state = "options"
             previous_state = "menu"
+            options_menu.show()
         elif action == "quit":
             running = False
         menu.draw()
@@ -84,6 +90,7 @@ while running:
         action = options_menu.handle_ev(events)
         if action == "back":
             current_state = previous_state or "menu"
+            options_menu.hide()
         elif action == "toggle_fullscreen":
             try:
                 if is_fullscreen:
@@ -116,13 +123,8 @@ while running:
                     else:
                         shoot = True
                         mx, _ = pygame.mouse.get_pos()
-                        player_px = int(
-                            game.player.x * tile_size
-                            - game.camera_x
-                            + game.player.image.get_width() // 2
-                        )
+                        player_px = int(game.player.x * tile_size - game.camera_x + game.player.image.get_width() // 2)
                         shoot_dir_right = mx >= player_px
-
             elif event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_TAB:
                     lock_pressed = True
@@ -137,17 +139,12 @@ while running:
                     else:
                         current_state = "pause"
                         previous_state = "game"
+                        pause_menu.show()
 
         game.handle_events(events)
 
         if not (checkpoint.menu_open or checkpoint.upgrade_open):
-            game.update(
-                keys,
-                mouse_clicked=mouse_clicked,
-                shoot=shoot,
-                shoot_dir_right=shoot_dir_right,
-                lock_pressed=lock_pressed
-            )
+            game.update(keys, mouse_clicked, shoot, shoot_dir_right, lock_pressed)
 
         for fnpc in game.friendly_npcs:
             fnpc.handle_input(events)
@@ -183,84 +180,54 @@ while running:
             toast.show("Updated checkpoint.", 1200)
 
     elif current_state == "pause":
-        # Rule 2: ESC in pause resumes game; menu only via button
         for event in events:
-            if event.type == pygame.KEYDOWN:
-                if event.key in (pygame.K_ESCAPE, pygame.K_p):
-                    current_state = previous_state or "game"
+            if event.type == pygame.KEYDOWN and event.key in (pygame.K_ESCAPE, pygame.K_p):
+                current_state = previous_state or "game"
+                pause_menu.hide()
 
         action = pause_menu.handle_ev(events)
         if action == "settings":
             current_state = "options"
             previous_state = "pause"
+            options_menu.show()
         elif action == "tasks":
             current_state = "tasks"
             previous_state = "pause"
+            pause_menu.hide()
+            tasks_panel.show()
+            inventory_panel.hide()
         elif action == "inventory":
             current_state = "inventory"
             previous_state = "pause"
+            pause_menu.hide()
+            inventory_panel.show()
+            tasks_panel.hide()
         elif action == "menu":
-            # Only path to main menu is via this button
             current_state = "menu"
             previous_state = "pause"
+            pause_menu.hide()
+            tasks_panel.hide()
+            inventory_panel.hide()
 
         pause_menu.draw()
 
     elif current_state == "tasks":
-        overlay = pygame.Surface((screen.get_width(), screen.get_height()), pygame.SRCALPHA)
-        overlay.fill((0, 0, 0, 180))
-        screen.blit(overlay, (0, 0))
+        tasks_panel.draw()
+        res = tasks_panel.handle_ev(events)
+        if res == "back":
+            tasks_panel.hide()
+            current_state = "pause"
+            previous_state = "tasks"
+            pause_menu.show()
 
-        title = font.render("Tasks", True, (255, 255, 255))
-        screen.blit(title, title.get_rect(center=(screen.get_width() // 2, 120)))
-
-        stub_lines = [
-            "- Reach the first bonfire",
-            "- Defeat the Hollow Knight",
-            "- Collect 5 soul fragments",
-        ]
-        y = 200
-        for line in stub_lines:
-            txt = font_small.render(line, True, (230, 230, 230))
-            screen.blit(txt, (screen.get_width() // 2 - 220, y))
-            y += 30
-
-        for event in events:
-            if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
-                current_state = "pause"
-                previous_state = "tasks"
-
-    # ---------------- INVENTORY STATE ----------------
     elif current_state == "inventory":
-        overlay = pygame.Surface((screen.get_width(), screen.get_height()), pygame.SRCALPHA)
-        overlay.fill((0, 0, 0, 180))
-        screen.blit(overlay, (0, 0))
-
-        title = font.render("Inventory", True, (255, 255, 255))
-        screen.blit(title, title.get_rect(center=(screen.get_width() // 2, 120)))
-
-        cell_w, cell_h = 80, 80
-        cols, rows = 6, 3
-        start_x = screen.get_width() // 2 - (cols * cell_w + (cols - 1) * 10) // 2
-        start_y = 200
-        for r in range(rows):
-            for c in range(cols):
-                rect = pygame.Rect(
-                    start_x + c * (cell_w + 10),
-                    start_y + r * (cell_h + 10),
-                    cell_w,
-                    cell_h
-                )
-                pygame.draw.rect(screen, (200, 200, 200), rect, 2)
-
-        hint = font_small.render("Press ESC to go back", True, (220, 220, 220))
-        screen.blit(hint, hint.get_rect(center=(screen.get_width() // 2, screen.get_height() - 80)))
-
-        for event in events:
-            if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
-                current_state = "pause"
-                previous_state = "inventory"
-
+        inventory_panel.draw()
+        res = inventory_panel.handle_ev(events)
+        if res == "back":
+            inventory_panel.hide()
+            current_state = "pause"
+            previous_state = "inventory"
+            pause_menu.show()
 
     pygame.display.flip()
     clock.tick(60)

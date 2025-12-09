@@ -1,46 +1,31 @@
 import pygame
-from Settings import *
-
+from Settings import WHITE, GRAY
 
 class Button:
-    def __init__(self, x, y, width, height, text):
-        self.rect = pygame.Rect(x, y, width, height)
+    def __init__(self, x, y, w, h, text=""):
+        self.rect = pygame.Rect(x, y, w, h)
         self.text = text
-        self.color = White_color
-        self.hover_color = Primary_color
-        self.text_color = Black_color
-        self.border_color = Black_color
-        self.font = Primary_font
-        self.hovered = False
-        self.border_radius = 18
+        self.font = pygame.font.SysFont("arial", 24)
+        self.hover = False
 
     def draw(self, screen):
-        fill_color = self.hover_color if self.hovered else self.color
+        color = GRAY if self.hover else (80, 80, 80)
+        pygame.draw.rect(screen, color, self.rect, border_radius=8)
+        pygame.draw.rect(screen, WHITE, self.rect, 2, border_radius=8)
 
-        pygame.draw.rect(screen, fill_color, self.rect, border_radius=self.border_radius)
-
-        pygame.draw.rect(screen, self.border_color, self.rect, 2, border_radius=self.border_radius)
-
-        text_surface = self.font.render(self.text, True, self.text_color)
-        shadow_color = (50, 50, 50)
-        shadow_surface = self.font.render(self.text, True, shadow_color)
-
-        text_rect = text_surface.get_rect(center=self.rect.center)
-        shadow_rect = shadow_surface.get_rect(
-            center=(text_rect.centerx + 2, text_rect.centery + 2))
-
-        screen.blit(shadow_surface, shadow_rect)
-
-        screen.blit(text_surface, text_rect)
+        if self.text:
+            label = self.font.render(self.text, True, WHITE)
+            lx = self.rect.x + (self.rect.w - label.get_width()) // 2
+            ly = self.rect.y + (self.rect.h - label.get_height()) // 2
+            screen.blit(label, (lx, ly))
 
     def handle_ev(self, event):
         if event.type == pygame.MOUSEMOTION:
-            self.hovered = self.rect.collidepoint(event.pos)
-        elif event.type == pygame.MOUSEBUTTONDOWN:
-            if self.rect.collidepoint(event.pos) and event.button == 1:
+            self.hover = self.rect.collidepoint(event.pos)
+        elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+            if self.rect.collidepoint(event.pos):
                 return True
         return False
 
     def is_clicked(self, pos):
         return self.rect.collidepoint(pos)
-

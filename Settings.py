@@ -13,6 +13,15 @@ White_color = (255, 255, 255)
 Primary_color = (120, 58, 156)
 Secondary_color = (51, 55, 84)
 
+BLACK = (0, 0, 0)
+WHITE = (255, 255, 255)
+GRAY = (140, 140, 140)
+PURPLE = (160, 100, 220)
+
+ASSETS_DIR = "assets"
+ICONS_DIR = ASSETS_DIR + "/images/icons"
+FONTS_NAME = "arial"
+
 Primary_font = pygame.font.SysFont("georgia", 40)
 
 tile_size = 32
