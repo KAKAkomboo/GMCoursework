@@ -1,34 +1,41 @@
 import pygame
+from Settings import screen_width, screen_height, Black_color
 from Ui.Buttons import Button
-from Settings import screen_width, screen_height, Primary_font, White_color, Black_color
 
 class Menu:
     def __init__(self, screen):
         self.screen = screen
         self.options = ["Start", "Options", "Quit"]
         self.selected = 0
-        self.font = pygame.font.SysFont("arial", 40)
 
-        self.buttons = []
-        bw, bh, spacing = 200, 60, 10
+        bw, bh = 240, 40
+        spacing = 20
         total_h = len(self.options) * bh + (len(self.options) - 1) * spacing
-        start_y = (screen_height - total_h) // 2
+        start_y = int(screen_height * 0.65) - total_h // 2
         start_x = (screen_width - bw) // 2
 
+        try:
+            img = pygame.image.load("assets/images/Background_Images/bggame.png").convert_alpha()
+            self.bg_image = pygame.transform.scale(img, (screen_width, screen_height))
+        except Exception as e:
+            print("Background load failed:", e)
+            self.bg_image = None
+
+        self.buttons = []
         for i, option in enumerate(self.options):
             y = start_y + i * (bh + spacing)
             self.buttons.append(Button(start_x, y, bw, bh, option))
 
-        self.title = Primary_font.render("Game Title", True, White_color)
-        self.title_rect = self.title.get_rect(center=(screen_width // 2, 100))
-
     def draw(self):
-        self.screen.fill(Black_color)
-        self.screen.blit(self.title, self.title_rect)
+        if self.bg_image:
+            self.screen.blit(self.bg_image, (0, 0))
+        else:
+            self.screen.fill(Black_color)
 
         mouse_pos = pygame.mouse.get_pos()
         for i, button in enumerate(self.buttons):
-            button.hover = button.rect.collidepoint(mouse_pos) or (i == self.selected)
+            button.hover = button.rect.collidepoint(mouse_pos)
+            button.focused = (i == self.selected)
             button.draw(self.screen)
 
     def handle_ev(self, events):
