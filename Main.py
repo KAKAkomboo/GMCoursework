@@ -1,6 +1,7 @@
 import pygame
 from Settings import screen_width, screen_height, tile_size
-from Ui.Menu.OptionsMenu import OptionsMenu
+from Ui.Menu.MainOption import MainOption
+from Ui.Menu.PauseOption import PauseOption
 from Ui.Menu.Menu import Menu
 from Ui.PauseMenu.PauseMenu import PauseMenu
 from Ui.PauseMenu.TaskPanel import TasksPanel
@@ -11,10 +12,19 @@ from smthForMap.UpgradeMenu import UpgradeMenu
 from smthForMap.SaveManager import SaveManager
 from Ui.Toast import Toast
 
-
 pygame.init()
+if not pygame.display.get_init():
+    pygame.display.init()
+
+def safe_set_mode(size, flags=0):
+    try:
+        return pygame.display.set_mode(size, flags)
+    except pygame.error:
+        pygame.display.init()
+        return pygame.display.set_mode(size, flags)
+
 pygame.display.set_caption("Game")
-screen = pygame.display.set_mode((screen_width, screen_height))
+screen = safe_set_mode((screen_width, screen_height))
 clock = pygame.time.Clock()
 
 try:
@@ -23,7 +33,8 @@ except Exception:
     pass
 
 menu = Menu(screen)
-options_menu = OptionsMenu(screen)
+main_option = MainOption(screen)
+pause_option = PauseOption(screen)
 pause_menu = PauseMenu(screen)
 tasks_panel = TasksPanel(screen)
 inventory_panel = InventoryPanel(screen)
@@ -51,10 +62,12 @@ previous_state = None
 is_fullscreen = False
 
 def recreate_ui_and_game(new_screen):
-    global screen, menu, options_menu, pause_menu, tasks_panel, inventory_panel, game, checkpoint
+    # Recreate all UI elements bound to the surface
+    global screen, menu, main_option, pause_option, pause_menu, tasks_panel, inventory_panel, game, checkpoint
     screen = new_screen
     menu = Menu(screen)
-    options_menu = OptionsMenu(screen)
+    main_option = MainOption(screen)
+    pause_option = PauseOption(screen)
     pause_menu = PauseMenu(screen)
     tasks_panel = TasksPanel(screen)
     inventory_panel = InventoryPanel(screen)
@@ -62,10 +75,29 @@ def recreate_ui_and_game(new_screen):
     checkpoint = Checkpoint(5, 5)
     checkpoint.set_sounds(save_sound, level_sound)
 
+def toggle_fullscreen():
+    global is_fullscreen
+    try:
+        if is_fullscreen:
+            new_screen = safe_set_mode((screen_width, screen_height))
+            is_fullscreen = False
+        else:
+            new_screen = safe_set_mode((0, 0), pygame.FULLSCREEN)
+            is_fullscreen = True
+        recreate_ui_and_game(new_screen)
+    except pygame.error:
+        new_screen = safe_set_mode((screen_width, screen_height))
+        is_fullscreen = False
+        recreate_ui_and_game(new_screen)
+
 save_manager.load(game.player)
 
 running = True
 while running:
+    if not pygame.display.get_surface():
+        new_screen = safe_set_mode((screen_width, screen_height))
+        recreate_ui_and_game(new_screen)
+
     events = pygame.event.get()
     keys = pygame.key.get_pressed()
 
@@ -79,32 +111,21 @@ while running:
             current_state = "game"
             previous_state = "menu"
         elif action == "options":
-            current_state = "options"
+            current_state = "main_options"
             previous_state = "menu"
-            options_menu.show()
+            main_option.show()
         elif action == "quit":
             running = False
         menu.draw()
 
-    elif current_state == "options":
-        action = options_menu.handle_ev(events)
+    elif current_state == "main_options":
+        action = main_option.handle_ev(events)
         if action == "back":
             current_state = previous_state or "menu"
-            options_menu.hide()
+            main_option.hide()
         elif action == "toggle_fullscreen":
-            try:
-                if is_fullscreen:
-                    new_screen = pygame.display.set_mode((screen_width, screen_height))
-                    is_fullscreen = False
-                else:
-                    new_screen = pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
-                    is_fullscreen = True
-                recreate_ui_and_game(new_screen)
-            except Exception:
-                new_screen = pygame.display.set_mode((screen_width, screen_height))
-                is_fullscreen = False
-                recreate_ui_and_game(new_screen)
-        options_menu.draw()
+            toggle_fullscreen()
+        main_option.draw()
 
     elif current_state == "game":
         mouse_clicked = False
@@ -187,9 +208,9 @@ while running:
 
         action = pause_menu.handle_ev(events)
         if action == "settings":
-            current_state = "options"
+            current_state = "pause_options"
             previous_state = "pause"
-            options_menu.show()
+            pause_option.show()
         elif action == "tasks":
             current_state = "tasks"
             previous_state = "pause"
@@ -210,6 +231,15 @@ while running:
             inventory_panel.hide()
 
         pause_menu.draw()
+
+    elif current_state == "pause_options":
+        action = pause_option.handle_ev(events)
+        if action == "back":
+            current_state = previous_state or "pause"
+            pause_option.hide()
+        elif action == "toggle_fullscreen":
+            toggle_fullscreen()
+        pause_option.draw()
 
     elif current_state == "tasks":
         tasks_panel.draw()

@@ -8,9 +8,9 @@ class Button:
         self.focused = False
 
         if font_path:
-            self.font = pygame.font.Font(font_path, 32)
+            self.font = pygame.font.Font(font_path, 24)
         else:
-            self.font = pygame.font.SysFont("timesnewroman", 32, bold=True)
+            self.font = pygame.font.SysFont("timesnewroman", 24, bold=True)
 
         self.text_color = (255, 255, 255)
         self.hover_text_color = (255, 200, 50)

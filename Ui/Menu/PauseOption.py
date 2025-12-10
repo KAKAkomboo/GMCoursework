@@ -2,7 +2,7 @@ import pygame
 from Ui.Buttons import Button
 from Settings import screen_width, screen_height, WHITE, PURPLE
 
-class OptionsMenu:
+class PauseOption:
     def __init__(self, screen):
         self.screen = screen
         self.visible = False
@@ -17,7 +17,7 @@ class OptionsMenu:
         self.btn_full = Button(screen_width // 2 - 120, 260, 240, 50, "Toggle Fullscreen")
         self.btn_back = Button(screen_width // 2 - 80, 330, 160, 50, "Back")
 
-        self.title = self.font_title.render("Settings", True, WHITE)
+        self.title = self.font_title.render("Pause Settings", True, WHITE)
 
     def show(self): self.visible = True
     def hide(self): self.visible = False
@@ -58,6 +58,10 @@ class OptionsMenu:
                 rel = (event.pos[0] - self.slider_rect.x) / float(self.slider_rect.w)
                 self.music_volume = max(0.0, min(1.0, rel))
 
-            if self.btn_full.handle_ev(event): return "toggle_fullscreen"
-            if self.btn_back.handle_ev(event): return "back"
+            if self.btn_full.handle_ev(event):
+                return "toggle_fullscreen"
+            if self.btn_back.handle_ev(event):
+                return "back"
+            if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
+                return "back"
         return None

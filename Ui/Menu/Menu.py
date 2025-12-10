@@ -11,7 +11,7 @@ class Menu:
         bw, bh = 240, 40
         spacing = 20
         total_h = len(self.options) * bh + (len(self.options) - 1) * spacing
-        start_y = int(screen_height * 0.65) - total_h // 2
+        start_y = int(screen_height * 0.8) - total_h // 2
         start_x = (screen_width - bw) // 2
 
         try:

@@ -22,7 +22,7 @@ ASSETS_DIR = "assets"
 ICONS_DIR = ASSETS_DIR + "/images/icons"
 FONTS_NAME = "arial"
 
-Primary_font = pygame.font.SysFont("georgia", 40)
+Primary_font = pygame.font.SysFont("georgia", 24)
 
 tile_size = 32
 
