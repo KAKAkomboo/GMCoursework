@@ -62,7 +62,6 @@ previous_state = None
 is_fullscreen = False
 
 def recreate_ui_and_game(new_screen):
-    # Recreate all UI elements bound to the surface
     global screen, menu, main_option, pause_option, pause_menu, tasks_panel, inventory_panel, game, checkpoint
     screen = new_screen
     menu = Menu(screen)
