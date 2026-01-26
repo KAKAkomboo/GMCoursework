@@ -1,6 +1,6 @@
 import pygame
 from src.core.settings import screen_width, screen_height, Black_color
-from src.ui.elements.Buttons import Button
+from src.ui.elements.button import Button
 
 class Menu:
     def __init__(self, screen):

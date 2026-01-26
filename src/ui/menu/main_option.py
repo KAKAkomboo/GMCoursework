@@ -1,5 +1,5 @@
 import pygame
-from src.ui.elements.Buttons import Button
+from src.ui.elements.button import Button
 from src.core.settings import screen_width, WHITE
 
 class MainOption:

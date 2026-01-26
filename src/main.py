@@ -1,16 +1,16 @@
 import pygame
 from src.core.settings import screen_width, screen_height, tile_size
-from ui.menu.MainOption import MainOption
-from ui.menu.PauseOption import PauseOption
-from ui.menu.Menu import Menu
-from ui.pause_menu.PauseMenu import PauseMenu
-from ui.pause_menu.TaskPanel import TasksPanel
-from ui.pause_menu.InventoryPanel import InventoryPanel
+from ui.menu.main_option import MainOption
+from ui.menu.pause_option import PauseOption
+from ui.menu.menu import Menu
+from ui.pause_menu.pause_menu import PauseMenu
+from ui.pause_menu.task_panel import TasksPanel
+from ui.pause_menu.inventory_panel import InventoryPanel
 from engine import Game
-from smthForMap.Checkpoint import Checkpoint
-from smthForMap.UpgradeMenu import UpgradeMenu
+from src.world.сheckpoint import Checkpoint
+from src.ui.menu.upgrade_menu import UpgradeMenu
 from smthForMap.SaveManager import SaveManager
-from src.ui.elements.Toast import Toast
+from src.ui.elements.toast import Toast
 
 pygame.init()
 if not pygame.display.get_init():
