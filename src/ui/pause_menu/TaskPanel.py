@@ -1,5 +1,5 @@
 import pygame
-from Settings import WHITE
+from src.core.settings import WHITE
 
 class TasksPanel:
     def __init__(self, screen):

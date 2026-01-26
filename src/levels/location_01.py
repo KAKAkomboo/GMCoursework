@@ -1,7 +1,7 @@
 # levels/location_01.py
 import pygame
-from typing import List, Optional, Tuple
-from Settings import tile_size
+from typing import List, Optional
+from src.core.settings import tile_size
 
 class Map:
 

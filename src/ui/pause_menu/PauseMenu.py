@@ -1,6 +1,6 @@
 import pygame, os
-from Ui.Buttons import Button
-from Settings import screen_width, screen_height, ICONS_DIR, WHITE, GRAY
+from src.ui.elements.Buttons import Button
+from src.core.settings import screen_width, ICONS_DIR, WHITE, GRAY
 
 class PauseMenu:
     def __init__(self, screen):

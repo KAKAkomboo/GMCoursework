@@ -1,5 +1,5 @@
 import pygame
-from Settings import WHITE
+from src.core.settings import WHITE
 
 class InventoryPanel:
     def __init__(self, screen):

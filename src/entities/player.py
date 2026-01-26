@@ -1,6 +1,6 @@
 import pygame
 import math
-from Settings import tile_size
+from src.core.settings import tile_size
 
 
 class Sword(pygame.sprite.Sprite):

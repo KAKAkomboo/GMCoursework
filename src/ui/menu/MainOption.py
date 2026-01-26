@@ -1,6 +1,6 @@
 import pygame
-from Ui.Buttons import Button
-from Settings import screen_width, screen_height, WHITE
+from src.ui.elements.Buttons import Button
+from src.core.settings import screen_width, WHITE
 
 class MainOption:
     def __init__(self, screen):

@@ -18,7 +18,7 @@ WHITE = (255, 255, 255)
 GRAY = (140, 140, 140)
 PURPLE = (160, 100, 220)
 
-ASSETS_DIR = "assets"
+ASSETS_DIR = "../assets"
 ICONS_DIR = ASSETS_DIR + "/images/icons"
 FONTS_NAME = "arial"
 

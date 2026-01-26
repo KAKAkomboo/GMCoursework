@@ -2,7 +2,7 @@ import math
 import pygame
 from random import randint, choice
 from collections import deque
-from Settings import tile_size
+from src.core.settings import tile_size
 
 class NPC(pygame.sprite.Sprite):
     def __init__(self, game, pos=(10.5, 5.5), scale=1.0, animation_time=180):

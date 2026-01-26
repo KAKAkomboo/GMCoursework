@@ -1,6 +1,6 @@
 import pygame
 import math
-from Settings import tile_size
+from src.core.settings import tile_size
 
 class FriendlyNPC(pygame.sprite.Sprite):
     def __init__(self, game, name="Villager", pos=(8.5, 6.5), scale=1.0, animation_time=220):
