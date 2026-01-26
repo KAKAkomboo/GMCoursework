@@ -15,7 +15,7 @@ class Menu:
         start_x = (screen_width - bw) // 2
 
         try:
-            img = pygame.image.load("assets/images/Background_Images/bggame.png").convert_alpha()
+            img = pygame.image.load("src/assets/images/Background_Images/bggame.png").convert_alpha()
             self.bg_image = pygame.transform.scale(img, (screen_width, screen_height))
         except Exception as e:
             print("Background load failed:", e)

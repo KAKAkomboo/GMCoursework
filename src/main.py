@@ -9,7 +9,7 @@ from ui.pause_menu.inventory_panel import InventoryPanel
 from engine import Game
 from src.world.сheckpoint import Checkpoint
 from src.ui.menu.upgrade_menu import UpgradeMenu
-from smthForMap.SaveManager import SaveManager
+from core.save_manager import SaveManager
 from src.ui.elements.toast import Toast
 
 pygame.init()

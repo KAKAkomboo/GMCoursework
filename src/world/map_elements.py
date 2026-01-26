@@ -1,9 +1,6 @@
 import pygame
 from src.core.settings import tile_size
 
-
-# CHECK POINT
-
 class Checkpoint(pygame.sprite.Sprite):
     def __init__(self, x, y):
         super().__init__()

@@ -1,8 +1,8 @@
 import pygame
 from entities.player import Player
 from entities.friendly_npc import NPC
-from entities.base_npc import FriendlyNPC   # <-- NEW
-from levels.location_01 import Map
+from entities.base_npc import FriendlyNPC
+from world.level_manager import Map
 from src.core.settings import screen_width, screen_height, tile_size
 
 class Game:
