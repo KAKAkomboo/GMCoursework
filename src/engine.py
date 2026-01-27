@@ -3,7 +3,7 @@ from entities.player import Player
 from entities.friendly_npc import NPC
 from entities.base_npc import FriendlyNPC
 from world.level_manager import Map
-from src.core.settings import screen_width, screen_height, tile_size
+from src.core.settings import tile_size
 
 class Game:
     def __init__(self, screen, mini_map):
@@ -31,16 +31,18 @@ class Game:
         self.friendly_npcs.append(elder)
 
     def update_camera(self):
-        self.camera_x = int(self.player.x * tile_size - screen_width // 2)
-        self.camera_y = int(self.player.y * tile_size - screen_height // 2)
+        screen_w, screen_h = self.screen.get_size()
+        
+        self.camera_x = int(self.player.x * tile_size - screen_w // 2)
+        self.camera_y = int(self.player.y * tile_size - screen_h // 2)
 
         map_pixel_w = getattr(self.map, "width", None)
         map_pixel_h = getattr(self.map, "height", None)
         if map_pixel_w is None or map_pixel_h is None:
             return
 
-        self.camera_x = max(0, min(self.camera_x, map_pixel_w - screen_width))
-        self.camera_y = max(0, min(self.camera_y, map_pixel_h - screen_height))
+        self.camera_x = max(0, min(self.camera_x, map_pixel_w - screen_w))
+        self.camera_y = max(0, min(self.camera_y, map_pixel_h - screen_h))
 
     def handle_events(self, events):
         for event in events:
@@ -80,7 +82,7 @@ class Game:
 
         self.player.draw(self.screen, self.camera_x, self.camera_y)
 
-    def reset_npcs(self):
+    def respawn_enemies(self):
         npc_list = list(self.npc_group)
         for i, npc in enumerate(npc_list):
             if i < len(self.initial_npc_positions):

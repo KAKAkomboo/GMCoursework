@@ -9,6 +9,8 @@ class SaveManager:
         data = {
             "death_x": getattr(player, "death_x", 0),
             "death_y": getattr(player, "death_y", 0),
+            "respawn_x": getattr(player, "respawn_x", 0),
+            "respawn_y": getattr(player, "respawn_y", 0),
             "max_health": getattr(player, "max_health", 100),
             "health": getattr(player, "health", 100),
             "max_stamina": getattr(player, "max_stamina", 100),
@@ -36,6 +38,15 @@ class SaveManager:
             return False
         player.death_x = data.get("death_x", 0)
         player.death_y = data.get("death_y", 0)
+
+        player.respawn_x = data.get("respawn_x", player.death_x)
+        player.respawn_y = data.get("respawn_y", player.death_y)
+
+        player.x = player.respawn_x
+        player.y = player.respawn_y
+        player.target_x = player.x
+        player.target_y = player.y
+
         player.max_health = data.get("max_health", 100)
         player.health = data.get("health", player.max_health)
         player.max_stamina = data.get("max_stamina", 100)

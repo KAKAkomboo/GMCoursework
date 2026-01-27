@@ -42,7 +42,7 @@ class NPC(pygame.sprite.Sprite):
         self.path = []
         self.path_index = 0
 
-        self.currency_reward = 10
+        self.currency_reward = 10000
 
     def update(self, dt=None):
         if self.alive:

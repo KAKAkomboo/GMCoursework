@@ -1,5 +1,6 @@
 import pygame
 import math
+import random
 from src.core.settings import tile_size
 
 
@@ -62,8 +63,12 @@ class Player(pygame.sprite.Sprite):
         self.max_health = 100
         self.alive = True
         self.show_death_popup = False
+
         self.death_x = self.x
         self.death_y = self.y
+
+        self.respawn_x = self.x
+        self.respawn_y = self.y
 
         self.weapon_damage = 25
         self.attack_range = 1.5
@@ -85,6 +90,8 @@ class Player(pygame.sprite.Sprite):
         self.facing_angle = 0.0
 
         self.currency = 0
+
+        self.soul_anim_timer = 0
 
 
     def handle_movement(self, keys):
@@ -233,6 +240,7 @@ class Player(pygame.sprite.Sprite):
                 self.health = 0
                 self.alive = False
                 self.show_death_popup = True
+                # Record where the player died
                 self.death_x, self.death_y = self.x, self.y
                 print("Player died!")
         else:
@@ -242,7 +250,7 @@ class Player(pygame.sprite.Sprite):
         self.health = self.max_health
         self.alive = True
         self.show_death_popup = False
-        self.x, self.y = self.death_x, self.death_y
+        self.x, self.y = self.respawn_x, self.respawn_y
         self.target_x, self.target_y = self.x, self.y
         self.moving = False
         self.locked_target = None
@@ -250,6 +258,15 @@ class Player(pygame.sprite.Sprite):
         self.sword.active = False
         self.currency = 0
         self.stamina = self.max_stamina  # reset stamina
+
+    def restore_health_and_flasks(self):
+        self.health = self.max_health
+        self.stamina = self.max_stamina
+
+    def block_input(self):
+        self.moving = False
+        self.target_x = self.x
+        self.target_y = self.y
 
     def update(self, keys, npc_group=None, mouse_clicked=False, dt=16.0,
                shoot=False, shoot_dir_right=True, lock_pressed=False,
@@ -278,9 +295,25 @@ class Player(pygame.sprite.Sprite):
         self.rect.center = (int(self.x * tile_size), int(self.y * tile_size))
 
         self.update_sword(dt, npc_group=npc_group)
+        self.soul_anim_timer += 1
 
     def swing_sord_safe(self):
         self.swing_sword()
+
+    def draw_bar_gradient(self, surface, rect, color_start, color_end):
+        x, y, w, h = rect
+        if w <= 0: return
+
+        grad_surf = pygame.Surface((w, h))
+
+        for i in range(h):
+            ratio = i / h
+            r = int(color_start[0] * (1 - ratio) + color_end[0] * ratio)
+            g = int(color_start[1] * (1 - ratio) + color_end[1] * ratio)
+            b = int(color_start[2] * (1 - ratio) + color_end[2] * ratio)
+            pygame.draw.line(grad_surf, (r, g, b), (0, i), (w, i))
+            
+        surface.blit(grad_surf, (x, y))
 
     def draw(self, screen, camera_x, camera_y):
         screen.blit(self.image, (self.x * tile_size - camera_x, self.y * tile_size - camera_y))
@@ -288,44 +321,77 @@ class Player(pygame.sprite.Sprite):
         if self.has_sword and (self.swinging or self.sword.active):
             screen.blit(self.sword.image, (self.sword.rect.x - camera_x, self.sword.rect.y - camera_y))
 
-        bar_width, bar_height = 200, 20
-        bar_x, bar_y = 10, 10
-        pygame.draw.rect(screen, (128, 128, 128), (bar_x, bar_y, bar_width, bar_height))
-        health_ratio = self.health / self.max_health
-        health_color = (int(255 * (1 - health_ratio)), int(255 * health_ratio), 0)
-        pygame.draw.rect(screen, health_color, (bar_x, bar_y, int(bar_width * health_ratio), bar_height))
+        ui_x, ui_y = 30, 30
 
-        stamina_bar_y = bar_y + bar_height + 5
-        pygame.draw.rect(screen, (50, 50, 50), (bar_x, stamina_bar_y, bar_width, bar_height))
-        stamina_ratio = self.stamina / self.max_stamina
-        stamina_color = (0, 0, 255)  # blue
-        pygame.draw.rect(screen, stamina_color, (bar_x, stamina_bar_y, int(bar_width * stamina_ratio), bar_height))
+        max_bar_width = 600
+        hp_w = min(int(self.max_health * 3), max_bar_width)
+        st_w = min(int(self.max_stamina * 2.4), max_bar_width)
+        
+        hp_h = 14
+        st_h = 10
+        st_offset = 20
 
-        if self.show_death_popup:
-            font = pygame.font.SysFont(None, 48)
-            text = font.render("YOU DIED", True, (255, 0, 0))
-            text_rect = text.get_rect(center=(screen.get_width() // 2, screen.get_height() // 2))
-            screen.blit(text, text_rect)
-            restart_text = font.render("Press R to Restart", True, (255, 255, 255))
-            restart_rect = restart_text.get_rect(center=(screen.get_width() // 2, screen.get_height() // 2 + 50))
-            screen.blit(restart_text, restart_rect)
+        col_hp_start = (180, 30, 30)
+        col_hp_end = (90, 10, 10)
+        col_st_start = (30, 160, 30)
+        col_st_end = (10, 70, 10)
+        col_border = (165, 140, 80)
+        col_bg = (10, 10, 10, 200)
+
+        s_hp = pygame.Surface((hp_w + 4, hp_h + 4), pygame.SRCALPHA)
+        s_hp.fill(col_bg)
+        screen.blit(s_hp, (ui_x - 2, ui_y - 2))
+
+        hp_ratio = max(0, self.health / self.max_health)
+        current_hp_w = int(hp_w * hp_ratio)
+        if current_hp_w > 0:
+            self.draw_bar_gradient(screen, (ui_x, ui_y, current_hp_w, hp_h), col_hp_start, col_hp_end)
+
+        pygame.draw.rect(screen, col_border, (ui_x - 1, ui_y - 1, hp_w + 2, hp_h + 2), 1)
+
+        st_x, st_y = ui_x, ui_y + st_offset
+
+        s_st = pygame.Surface((st_w + 4, st_h + 4), pygame.SRCALPHA)
+        s_st.fill(col_bg)
+        screen.blit(s_st, (st_x - 2, st_y - 2))
+
+        st_ratio = max(0, self.stamina / self.max_stamina)
+        current_st_w = int(st_w * st_ratio)
+        if current_st_w > 0:
+            self.draw_bar_gradient(screen, (st_x, st_y, current_st_w, st_h), col_st_start, col_st_end)
+
+        pygame.draw.rect(screen, col_border, (st_x - 1, st_y - 1, st_w + 2, st_h + 2), 1)
 
         if self.locked_target and getattr(self.locked_target, "alive", True):
             tx, ty = getattr(self.locked_target, "pos", (self.locked_target.rect.centerx / tile_size, self.locked_target.rect.centery / tile_size))
             target_screen_x = int(tx * tile_size - camera_x)
             target_screen_y = int(ty * tile_size - camera_y)
-            pygame.draw.circle(screen, (255, 255, 0), (target_screen_x, target_screen_y), 20, 2)
+            pygame.draw.circle(screen, (255, 255, 255), (target_screen_x, target_screen_y), 5)
 
         self.draw_currency(screen)
 
     def draw_currency(self, screen):
-        font = pygame.font.SysFont(None, 36)
-        text = font.render(f"{self.currency}", True, (255, 255, 0))
-        padding = 10
-        box_width, box_height = 100, 50
-        box_x = screen.get_width() - box_width - padding
-        box_y = screen.get_height() - box_height - padding
-        pygame.draw.rect(screen, (30, 30, 30), (box_x, box_y, box_width, box_height))
-        pygame.draw.rect(screen, (200, 200, 200), (box_x, box_y, box_width, box_height), 2)
-        text_rect = text.get_rect(center=(box_x + box_width // 2, box_y + box_height // 2))
-        screen.blit(text, text_rect)
+        font = pygame.font.SysFont("timesnewroman", 36)
+        text = font.render(f"{self.currency}", True, (255, 255, 255))
+
+        padding_x = 40
+        padding_y = 40
+        
+        pos_x = screen.get_width() - padding_x - text.get_width()
+        pos_y = screen.get_height() - padding_y - text.get_height()
+
+        shadow = font.render(f"{self.currency}", True, (0, 0, 0))
+        screen.blit(shadow, (pos_x + 2, pos_y + 2))
+        screen.blit(text, (pos_x, pos_y))
+
+        icon_x = pos_x - 30
+        icon_y = pos_y + text.get_height() // 2
+
+        pulse = (math.sin(self.soul_anim_timer * 0.1) + 1) * 2
+
+        glow_surf = pygame.Surface((40, 40), pygame.SRCALPHA)
+        pygame.draw.circle(glow_surf, (100, 200, 255, 50), (20, 20), 15 + pulse)
+        screen.blit(glow_surf, (icon_x - 20, icon_y - 20))
+
+        pygame.draw.circle(screen, (200, 240, 255), (icon_x, icon_y), 6)
+        pygame.draw.circle(screen, (255, 255, 255), (icon_x, icon_y), 3)

@@ -1,20 +1,25 @@
 import pygame
-from src.core.settings import screen_width, screen_height, tile_size
+from src.core.settings import tile_size
 from ui.menu.main_option import MainOption
 from ui.menu.pause_option import PauseOption
 from ui.menu.menu import Menu
 from ui.pause_menu.pause_menu import PauseMenu
 from ui.pause_menu.task_panel import TasksPanel
 from ui.pause_menu.inventory_panel import InventoryPanel
+from src.ui.menu.sub_menus import BrightnessMenu, KeySettingsMenu, PlaceholderMenu, GameOptionsMenu
 from engine import Game
 from src.world.сheckpoint import Checkpoint
 from src.ui.menu.upgrade_menu import UpgradeMenu
 from core.save_manager import SaveManager
 from src.ui.elements.toast import Toast
+from src.ui.elements.death_screen import DeathScreen
 
 pygame.init()
 if not pygame.display.get_init():
     pygame.display.init()
+
+initial_screen_width = 1280
+initial_screen_height = 720
 
 def safe_set_mode(size, flags=0):
     try:
@@ -24,7 +29,7 @@ def safe_set_mode(size, flags=0):
         return pygame.display.set_mode(size, flags)
 
 pygame.display.set_caption("Game")
-screen = safe_set_mode((screen_width, screen_height))
+screen = safe_set_mode((initial_screen_width, initial_screen_height))
 clock = pygame.time.Clock()
 
 try:
@@ -39,10 +44,22 @@ pause_menu = PauseMenu(screen)
 tasks_panel = TasksPanel(screen)
 inventory_panel = InventoryPanel(screen)
 toast = Toast()
+death_screen = DeathScreen(screen.get_width(), screen.get_height()) # Use actual screen size
+
+brightness_menu = BrightnessMenu(screen)
+key_settings_menu = KeySettingsMenu(screen)
+game_options_menu = GameOptionsMenu(screen)
+network_menu = PlaceholderMenu(screen, "Network Settings")
+pc_menu = PlaceholderMenu(screen, "PC Settings")
 
 mini_map = [[1] + [0] * 78 for _ in range(10)]
 game = Game(screen, mini_map)
-checkpoint = Checkpoint(5, 5)
+
+checkpoints = [
+    Checkpoint(5, 5),
+    Checkpoint(70, 5)
+]
+
 upgrade_menu = UpgradeMenu()
 save_manager = SaveManager()
 
@@ -55,50 +72,78 @@ try:
 except Exception:
     save_sound = None
     level_sound = None
-checkpoint.set_sounds(save_sound, level_sound)
+
+for cp in checkpoints:
+    cp.set_sounds(save_sound, level_sound)
 
 current_state = "menu"
 previous_state = None
 is_fullscreen = False
 
-def recreate_ui_and_game(new_screen):
-    global screen, menu, main_option, pause_option, pause_menu, tasks_panel, inventory_panel, game, checkpoint
+def update_screen_references(new_screen):
+    global screen
     screen = new_screen
-    menu = Menu(screen)
-    main_option = MainOption(screen)
-    pause_option = PauseOption(screen)
-    pause_menu = PauseMenu(screen)
-    tasks_panel = TasksPanel(screen)
-    inventory_panel = InventoryPanel(screen)
-    game = Game(screen, mini_map)
-    checkpoint = Checkpoint(5, 5)
-    checkpoint.set_sounds(save_sound, level_sound)
+
+    menu.screen = screen
+    menu.recalculate_layout()
+    
+    main_option.screen = screen
+    main_option.recalculate_layout()
+    
+    pause_option.screen = screen
+    pause_option.recalculate_layout()
+    
+    pause_menu.screen = screen
+    pause_menu.recalculate_layout()
+    
+    tasks_panel.screen = screen
+    inventory_panel.screen = screen
+
+    death_screen.w = screen.get_width()
+    death_screen.h = screen.get_height()
+
+    brightness_menu.screen = screen
+    brightness_menu.recalculate_layout()
+    key_settings_menu.screen = screen
+    key_settings_menu.recalculate_layout()
+    game_options_menu.screen = screen
+    game_options_menu.recalculate_layout()
+    network_menu.screen = screen
+    network_menu.recalculate_layout()
+    pc_menu.screen = screen
+    pc_menu.recalculate_layout()
+    
+    game.screen = screen
 
 def toggle_fullscreen():
     global is_fullscreen
     try:
         if is_fullscreen:
-            new_screen = safe_set_mode((screen_width, screen_height))
+            new_screen = safe_set_mode((initial_screen_width, initial_screen_height))
             is_fullscreen = False
         else:
             new_screen = safe_set_mode((0, 0), pygame.FULLSCREEN)
             is_fullscreen = True
-        recreate_ui_and_game(new_screen)
+        update_screen_references(new_screen)
     except pygame.error:
-        new_screen = safe_set_mode((screen_width, screen_height))
+        new_screen = safe_set_mode((initial_screen_width, initial_screen_height))
         is_fullscreen = False
-        recreate_ui_and_game(new_screen)
+        update_screen_references(new_screen)
 
-save_manager.load(game.player)
+if save_manager.load(game.player):
+    for cp in checkpoints:
+        if cp.x == game.player.respawn_x and cp.y == game.player.respawn_y:
+            cp.bonfire_lit = True
 
 running = True
 while running:
-    if not pygame.display.get_surface():
-        new_screen = safe_set_mode((screen_width, screen_height))
-        recreate_ui_and_game(new_screen)
+    if not pygame.display.get_surface(): # If window is closed or lost
+        new_screen = safe_set_mode((initial_screen_width, initial_screen_height))
+        update_screen_references(new_screen)
 
     events = pygame.event.get()
     keys = pygame.key.get_pressed()
+    now = pygame.time.get_ticks()
 
     for event in events:
         if event.type == pygame.QUIT:
@@ -120,11 +165,59 @@ while running:
     elif current_state == "main_options":
         action = main_option.handle_ev(events)
         if action == "back":
-            current_state = previous_state or "menu"
+            current_state = "menu"
             main_option.hide()
-        elif action == "toggle_fullscreen":
-            toggle_fullscreen()
+        elif action == "game_options":
+            current_state = "game_options"
+            previous_state = "main_options"
+        elif action == "brightness":
+            current_state = "brightness"
+            previous_state = "main_options"
+        elif action == "key_settings":
+            current_state = "key_settings"
+            previous_state = "main_options"
+        elif action == "network_settings":
+            current_state = "network_settings"
+            previous_state = "main_options"
+        elif action == "pc_settings":
+            current_state = "pc_settings"
+            previous_state = "main_options"
         main_option.draw()
+
+    elif current_state == "game_options":
+        for event in events:
+            res = game_options_menu.handle_ev(event)
+            if res == "back":
+                current_state = "main_options"
+        game_options_menu.draw()
+        
+    elif current_state == "brightness":
+        for event in events:
+            res = brightness_menu.handle_ev(event)
+            if res == "back":
+                current_state = "main_options"
+        brightness_menu.draw()
+        
+    elif current_state == "key_settings":
+        for event in events:
+            res = key_settings_menu.handle_ev(event)
+            if res == "back":
+                current_state = "main_options"
+        key_settings_menu.draw()
+
+    elif current_state == "network_settings":
+        for event in events:
+            res = network_menu.handle_ev(event)
+            if res == "back":
+                current_state = "main_options"
+        network_menu.draw()
+
+    elif current_state == "pc_settings":
+        for event in events:
+            res = pc_menu.handle_ev(event)
+            if res == "back":
+                current_state = "main_options"
+        pc_menu.draw()
 
     elif current_state == "game":
         mouse_clicked = False
@@ -132,14 +225,17 @@ while running:
         shoot_dir_right = True
         lock_pressed = False
         activate_checkpoint = False
+        
+        any_menu_open = any(cp.menu_open or cp.upgrade_open for cp in checkpoints)
 
         for event in events:
             if event.type == pygame.MOUSEBUTTONDOWN:
                 if event.button == 1:
                     mouse_clicked = True
                 elif event.button == 3:
-                    if checkpoint.menu_open or checkpoint.upgrade_open:
-                        checkpoint.close_all()
+                    if any_menu_open:
+                        for cp in checkpoints:
+                            cp.close_all()
                     else:
                         shoot = True
                         mx, _ = pygame.mouse.get_pos()
@@ -151,51 +247,70 @@ while running:
                 elif event.key == pygame.K_e:
                     activate_checkpoint = True
                 elif event.key == pygame.K_ESCAPE:
-                    if checkpoint.upgrade_open:
-                        checkpoint.upgrade_open = False
-                        checkpoint.menu_open = True
-                    elif checkpoint.menu_open:
-                        checkpoint.close_all()
-                    else:
+                    handled_by_cp = False
+                    for cp in checkpoints:
+                        if cp.upgrade_open:
+                            cp.upgrade_open = False
+                            cp.menu_open = True
+                            handled_by_cp = True
+                        elif cp.menu_open:
+                            cp.close_all()
+                            handled_by_cp = True
+                    
+                    if not handled_by_cp:
                         current_state = "pause"
                         previous_state = "game"
                         pause_menu.show()
 
         game.handle_events(events)
 
-        if not (checkpoint.menu_open or checkpoint.upgrade_open):
+        if not any_menu_open:
             game.update(keys, mouse_clicked, shoot, shoot_dir_right, lock_pressed)
 
         for fnpc in game.friendly_npcs:
             fnpc.handle_input(events)
 
-        checkpoint.update_active(game.player)
-        if activate_checkpoint and checkpoint.active:
-            checkpoint.open_menu(game.player)
-
-        btns = checkpoint.draw(screen, game.camera_x, game.camera_y, font, font_small)
-        if checkpoint.menu_open and not checkpoint.upgrade_open:
-            checkpoint.handle_menu_keys(game.player, keys, pygame.time.get_ticks(), toast)
-            checkpoint.handle_menu_mouse(game.player, toast, btns, pygame.time.get_ticks())
-
-        if checkpoint.upgrade_open:
-            cb, bb = upgrade_menu.draw(screen, game.player, font, font_small)
-            res = upgrade_menu.handle_input(game.player, events, keys, cb, bb, toast, level_sound)
-            if res == "close":
-                checkpoint.close_all()
-            elif res == "back":
-                checkpoint.upgrade_open = False
-                checkpoint.menu_open = True
+        for cp in checkpoints:
+            cp.update(game.player, now)
+            if activate_checkpoint and cp.active:
+                cp.open_menu(game.player)
 
         game.draw()
+
+        if brightness_menu.brightness < 1.0:
+            darkness = pygame.Surface(screen.get_size(), pygame.SRCALPHA)
+            alpha = int((1.0 - brightness_menu.brightness) * 255)
+            darkness.fill((0, 0, 0, alpha))
+            screen.blit(darkness, (0, 0))
+
+        for cp in checkpoints:
+            btns = cp.draw(screen, game.camera_x, game.camera_y, font, font_small)
+            if cp.menu_open and not cp.upgrade_open:
+                cp.handle_menu_keys(game.player, toast, game, keys, now)
+                cp.handle_menu_mouse(game.player, toast, game, btns, now)
+            if cp.upgrade_open:
+                cb, bb = upgrade_menu.draw(screen, game.player, font, font_small)
+                res = upgrade_menu.handle_input(game.player, events, keys, cb, bb, toast, level_sound)
+                if res == "close":
+                    cp.close_all()
+                elif res == "back":
+                    cp.upgrade_open = False
+                    cp.menu_open = True
+
         toast.draw(screen, font_small)
-        checkpoint.draw_bonfire(screen, game.camera_x, game.camera_y)
 
-        if not game.player.alive and keys[pygame.K_r]:
-            game.player.restart()
-            game.reset_npcs()
+        if not game.player.alive:
+            death_screen.show()
+            death_screen.update()
+            death_screen.draw(screen)
+            if keys[pygame.K_r]:
+                game.player.restart()
+                game.respawn_enemies()
+                death_screen.hide()
+        else:
+            death_screen.hide()
 
-        if not checkpoint.menu_open and not checkpoint.upgrade_open and keys[pygame.K_F5]:
+        if not any_menu_open and keys[pygame.K_F5]:
             save_manager.save(game.player)
             toast.show("Updated checkpoint.", 1200)
 
@@ -229,6 +344,7 @@ while running:
             tasks_panel.hide()
             inventory_panel.hide()
 
+        game.draw()
         pause_menu.draw()
 
     elif current_state == "pause_options":
@@ -238,9 +354,12 @@ while running:
             pause_option.hide()
         elif action == "toggle_fullscreen":
             toggle_fullscreen()
+        
+        game.draw()
         pause_option.draw()
 
     elif current_state == "tasks":
+        game.draw()
         tasks_panel.draw()
         res = tasks_panel.handle_ev(events)
         if res == "back":
@@ -250,6 +369,7 @@ while running:
             pause_menu.show()
 
     elif current_state == "inventory":
+        game.draw()
         inventory_panel.draw()
         res = inventory_panel.handle_ev(events)
         if res == "back":
