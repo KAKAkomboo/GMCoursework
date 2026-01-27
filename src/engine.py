@@ -1,4 +1,5 @@
 import pygame
+import random
 from entities.player import Player
 from entities.friendly_npc import NPC
 from entities.base_npc import FriendlyNPC
@@ -12,8 +13,18 @@ class Game:
         self.map = Map(mini_map)
 
         self.player = Player(1, 1, self.map)
+        self.player.game_instance = self
+
         self.camera_x = 0
         self.camera_y = 0
+
+        self.time_scale = 1.0
+        self.hit_stop_timer = 0
+        
+        self.shake_timer = 0
+        self.shake_strength = 0
+        self.shake_offset_x = 0
+        self.shake_offset_y = 0
 
         self.npc_group = pygame.sprite.Group()
         self.initial_npc_positions = []
@@ -30,19 +41,45 @@ class Game:
         self.friendly_npcs.append(villager)
         self.friendly_npcs.append(elder)
 
+    def trigger_hit_stop(self, duration_ms, scale=0.05):
+        self.hit_stop_timer = duration_ms
+        self.time_scale = scale
+
+    def trigger_screen_shake(self, duration_ms, strength):
+        self.shake_timer = duration_ms
+        self.shake_strength = strength
+
+    def update_juice(self, real_dt):
+        if self.hit_stop_timer > 0:
+            self.hit_stop_timer -= real_dt
+            if self.hit_stop_timer <= 0:
+                self.time_scale = 1.0
+        else:
+            self.time_scale = 1.0
+
+        if self.shake_timer > 0:
+            self.shake_timer -= real_dt
+            self.shake_offset_x = random.uniform(-self.shake_strength, self.shake_strength)
+            self.shake_offset_y = random.uniform(-self.shake_strength, self.shake_strength)
+        else:
+            self.shake_offset_x = 0
+            self.shake_offset_y = 0
+
     def update_camera(self):
         screen_w, screen_h = self.screen.get_size()
-        
-        self.camera_x = int(self.player.x * tile_size - screen_w // 2)
-        self.camera_y = int(self.player.y * tile_size - screen_h // 2)
+
+        target_x = int(self.player.x * tile_size - screen_w // 2)
+        target_y = int(self.player.y * tile_size - screen_h // 2)
 
         map_pixel_w = getattr(self.map, "width", None)
         map_pixel_h = getattr(self.map, "height", None)
-        if map_pixel_w is None or map_pixel_h is None:
-            return
 
-        self.camera_x = max(0, min(self.camera_x, map_pixel_w - screen_w))
-        self.camera_y = max(0, min(self.camera_y, map_pixel_h - screen_h))
+        if map_pixel_w is not None and map_pixel_h is not None:
+            target_x = max(0, min(target_x, map_pixel_w - screen_w))
+            target_y = max(0, min(target_y, map_pixel_h - screen_h))
+
+        self.camera_x = target_x + self.shake_offset_x
+        self.camera_y = target_y + self.shake_offset_y
 
     def handle_events(self, events):
         for event in events:
@@ -54,9 +91,15 @@ class Game:
         return None
 
     def update(self, keys, mouse_clicked=False, shoot=False, shoot_dir_right=True, lock_pressed=False):
+        raw_dt = 16.0 
+        
+        self.update_juice(raw_dt)
+
+        game_dt = raw_dt * self.time_scale
+
         npc_list = list(self.npc_group)
-        self.player.update(keys, npc_group=npc_list, mouse_clicked=mouse_clicked, dt=1.0,
-                           shoot=shoot, shoot_dir_right=shoot_dir_right, lock_pressed=lock_pressed)
+
+        self.player.update(keys, npc_group=npc_list, mouse_clicked=mouse_clicked, dt=game_dt)
 
         for npc in list(self.npc_group):
             npc.update()
@@ -70,17 +113,21 @@ class Game:
 
     def draw(self):
         self.screen.fill((30, 30, 30))
-        self.map.draw(self.screen, self.camera_x, self.camera_y)
+
+        cam_x_int = int(self.camera_x)
+        cam_y_int = int(self.camera_y)
+        
+        self.map.draw(self.screen, cam_x_int, cam_y_int)
 
         for npc in self.npc_group:
-            offset_rect = npc.rect.move(-self.camera_x, -self.camera_y)
+            offset_rect = npc.rect.move(-cam_x_int, -cam_y_int)
             self.screen.blit(npc.image, offset_rect)
-            npc.draw_health_bar(self.screen, self.camera_x, self.camera_y)
+            npc.draw_health_bar(self.screen, cam_x_int, cam_y_int)
 
         for fnpc in self.friendly_npcs:
-            fnpc.draw(self.screen, self.camera_x, self.camera_y)
+            fnpc.draw(self.screen, cam_x_int, cam_y_int)
 
-        self.player.draw(self.screen, self.camera_x, self.camera_y)
+        self.player.draw(self.screen, cam_x_int, cam_y_int)
 
     def respawn_enemies(self):
         npc_list = list(self.npc_group)
