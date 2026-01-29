@@ -1,5 +1,5 @@
 import pygame
-from src.core.settings import tile_size
+from src.core.settings import screen_width, screen_height, tile_size
 from ui.menu.main_option import MainOption
 from ui.menu.pause_option import PauseOption
 from ui.menu.menu import Menu
@@ -8,6 +8,8 @@ from ui.pause_menu.task_panel import TasksPanel
 from ui.pause_menu.inventory_panel import InventoryPanel
 from src.ui.menu.sub_menus import BrightnessMenu, KeySettingsMenu, PlaceholderMenu, GameOptionsMenu
 from src.ui.elements.dialogue_box import DialogueBox
+from src.ui.elements.notification import Notification
+from src.core.quest_system import QuestSystem
 from engine import Game
 from src.world.сheckpoint import Checkpoint
 from src.ui.menu.upgrade_menu import UpgradeMenu
@@ -19,9 +21,8 @@ pygame.init()
 if not pygame.display.get_init():
     pygame.display.init()
 
-info = pygame.display.Info()
-initial_screen_width = info.current_w
-initial_screen_height = info.current_h
+initial_screen_width = 1280
+initial_screen_height = 720
 
 def safe_set_mode(size, flags=0):
     try:
@@ -48,6 +49,7 @@ inventory_panel = InventoryPanel(screen)
 toast = Toast()
 death_screen = DeathScreen(screen.get_width(), screen.get_height())
 dialogue_box = DialogueBox(screen)
+notification = Notification(screen)
 
 brightness_menu = BrightnessMenu(screen)
 key_settings_menu = KeySettingsMenu(screen)
@@ -55,9 +57,13 @@ game_options_menu = GameOptionsMenu(screen)
 network_menu = PlaceholderMenu(screen, "Network Settings")
 pc_menu = PlaceholderMenu(screen, "PC Settings")
 
+quest_system = QuestSystem()
+
 mini_map = [[1] + [0] * 78 for _ in range(10)]
 game = Game(screen, mini_map)
-game.set_dialogue_system(dialogue_box) # Connect dialogue system
+game.set_dialogue_system(dialogue_box)
+game.quest_system = quest_system
+game.notification = notification
 
 checkpoints = [
     Checkpoint(5, 5),
@@ -82,7 +88,7 @@ for cp in checkpoints:
 
 current_state = "menu"
 previous_state = None
-is_maximized = True
+is_fullscreen = False
 
 def update_screen_references(new_screen):
     global screen
@@ -107,7 +113,9 @@ def update_screen_references(new_screen):
     death_screen.h = screen.get_height()
     
     dialogue_box.screen = screen
-
+    dialogue_box.y = screen.get_height() - dialogue_box.height
+    
+    notification.screen = screen
     brightness_menu.screen = screen
     brightness_menu.recalculate_layout()
     key_settings_menu.screen = screen
@@ -122,19 +130,19 @@ def update_screen_references(new_screen):
     game.screen = screen
 
 def toggle_fullscreen():
-    global is_maximized
+    global is_fullscreen
     try:
-        if is_maximized:
-            new_screen = safe_set_mode((1280, 720), pygame.RESIZABLE)
-            is_maximized = False
+        if is_fullscreen:
+            new_screen = safe_set_mode((initial_screen_width, initial_screen_height), pygame.RESIZABLE)
+            is_fullscreen = False
         else:
             info = pygame.display.Info()
             new_screen = safe_set_mode((info.current_w, info.current_h), pygame.RESIZABLE)
-            is_maximized = True
+            is_fullscreen = True
         update_screen_references(new_screen)
     except pygame.error:
-        new_screen = safe_set_mode((1280, 720), pygame.RESIZABLE)
-        is_maximized = False
+        new_screen = safe_set_mode((initial_screen_width, initial_screen_height), pygame.RESIZABLE)
+        is_fullscreen = False
         update_screen_references(new_screen)
 
 if save_manager.load(game.player):
@@ -240,7 +248,6 @@ while running:
         any_menu_open = any(cp.menu_open or cp.upgrade_open for cp in checkpoints)
         dialogue_active = dialogue_box.active
 
-
         if dialogue_active:
             dialogue_box.handle_input(events)
         else:
@@ -316,6 +323,9 @@ while running:
 
         dialogue_box.update(real_dt)
         dialogue_box.draw()
+
+        notification.update(real_dt)
+        notification.draw()
 
         toast.draw(screen, font_small)
 
