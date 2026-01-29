@@ -8,8 +8,9 @@ from ui.pause_menu.task_panel import TasksPanel
 from ui.pause_menu.inventory_panel import InventoryPanel
 from src.ui.menu.sub_menus import BrightnessMenu, KeySettingsMenu, PlaceholderMenu, GameOptionsMenu
 from src.ui.elements.dialogue_box import DialogueBox
-from src.ui.elements.notification import Notification
-from src.core.quest_system import QuestSystem
+# from src.ui.elements.notification import Notification
+# from src.core.quest_system import QuestSystem
+from src.ui.cutscene import Cutscene
 from engine import Game
 from src.world.сheckpoint import Checkpoint
 from src.ui.menu.upgrade_menu import UpgradeMenu
@@ -49,7 +50,7 @@ inventory_panel = InventoryPanel(screen)
 toast = Toast()
 death_screen = DeathScreen(screen.get_width(), screen.get_height())
 dialogue_box = DialogueBox(screen)
-notification = Notification(screen)
+# notification = Notification(screen)
 
 brightness_menu = BrightnessMenu(screen)
 key_settings_menu = KeySettingsMenu(screen)
@@ -57,14 +58,14 @@ game_options_menu = GameOptionsMenu(screen)
 network_menu = PlaceholderMenu(screen, "Network Settings")
 pc_menu = PlaceholderMenu(screen, "PC Settings")
 
-quest_system = QuestSystem()
+# quest_system = QuestSystem()
 
 mini_map = [[1] + [0] * 78 for _ in range(10)]
 game = Game(screen, mini_map)
 game.set_dialogue_system(dialogue_box)
-game.quest_system = quest_system
-game.notification = notification
-game.task_panel = tasks_panel
+# game.quest_system = quest_system
+# game.notification = notification
+# game.task_panel = tasks_panel
 
 checkpoints = [
     Checkpoint(5, 5),
@@ -86,6 +87,13 @@ except Exception:
 
 for cp in checkpoints:
     cp.set_sounds(save_sound, level_sound)
+
+cutscene_text = [
+    "sebgruieroig",
+    "JNEFOUn wefnweaiog arefiaiovj",
+    "krjagfiuarg OEJFOUIWFE wioefjoij"
+]
+intro_cutscene = Cutscene(screen, cutscene_text)
 
 current_state = "menu"
 previous_state = None
@@ -116,7 +124,7 @@ def update_screen_references(new_screen):
     dialogue_box.screen = screen
     dialogue_box.y = screen.get_height() - dialogue_box.height
     
-    notification.screen = screen
+    # notification.screen = screen
     brightness_menu.screen = screen
     brightness_menu.recalculate_layout()
     key_settings_menu.screen = screen
@@ -127,6 +135,8 @@ def update_screen_references(new_screen):
     network_menu.recalculate_layout()
     pc_menu.screen = screen
     pc_menu.recalculate_layout()
+    
+    intro_cutscene.screen = screen
     
     game.screen = screen
 
@@ -169,10 +179,19 @@ while running:
         if event.type == pygame.VIDEORESIZE:
             update_screen_references(safe_set_mode(event.size, pygame.RESIZABLE))
 
-    if current_state == "menu":
+    if current_state == "cutscene":
+        for event in events:
+            intro_cutscene.handle_event(event)
+        
+        if not intro_cutscene.update(real_dt):
+            current_state = "game"
+        
+        intro_cutscene.draw()
+
+    elif current_state == "menu":
         action = menu.handle_ev(events)
         if action == "start":
-            current_state = "game"
+            current_state = "cutscene"
             previous_state = "menu"
         elif action == "options":
             current_state = "main_options"
@@ -325,8 +344,8 @@ while running:
         dialogue_box.update(real_dt)
         dialogue_box.draw()
 
-        notification.update(real_dt)
-        notification.draw()
+        # notification.update(real_dt)
+        # notification.draw()
 
         toast.draw(screen, font_small)
 
@@ -348,7 +367,7 @@ while running:
     elif current_state == "pause":
         for event in events:
             if event.type == pygame.KEYDOWN and event.key in (pygame.K_ESCAPE, pygame.K_p):
-                current_state = "game"
+                current_state = "game" # Go back to game
                 pause_menu.hide()
 
         action = pause_menu.handle_ev(events)

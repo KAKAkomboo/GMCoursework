@@ -39,7 +39,6 @@ class FriendlyNPC(pygame.sprite.Sprite):
                 },
                 "elder_quest_start": {
                     "text": "Іскра... Вона ховається у темряві. Принеси мені її, і я віддячу.",
-                    "action": "give_quest",
                     "next": "exit"
                 }
             }
@@ -77,17 +76,7 @@ class FriendlyNPC(pygame.sprite.Sprite):
         for e in events:
             if e.type == pygame.KEYDOWN and e.key == pygame.K_e:
                 if hasattr(self.game, "start_dialogue"):
-                    self.game.start_dialogue(self.name, self.dialogue_tree, self.handle_dialogue_action)
-
-    def handle_dialogue_action(self, action_id):
-        if action_id == "give_quest":
-            if hasattr(self.game, "quest_system") and hasattr(self.game, "notification"):
-                quest = self.game.quest_system.get_random_quest()
-                if quest:
-                    if hasattr(self.game, "task_panel"):
-                        self.game.task_panel.add_quest(quest)
-
-                    self.game.notification.show(f"Нове завдання: {quest.title}")
+                    self.game.start_dialogue(self.name, self.dialogue_tree, None)
 
     def draw(self, screen, camera_x, camera_y):
         screen_x = self.pos[0] * tile_size - camera_x - (self.rect.width / 2)

@@ -15,7 +15,6 @@ class PauseMenu:
 
         self.categories = [
             ("Inventory", "inventory"),
-            ("Tasks", "tasks"),
             ("Options", "settings"),
             ("Quit Game", "menu")
         ]

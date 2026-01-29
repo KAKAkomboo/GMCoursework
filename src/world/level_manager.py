@@ -6,8 +6,8 @@ from src.core.settings import tile_size
 class Map:
 
     DEFAULT_TILE_COLORS = {
-        0: (40, 40, 40),    # floor
-        1: (100, 100, 100), # wall
+        0: (40, 40, 40),
+        1: (100, 100, 100),
         2: (0, 255, 0),
         3: (255, 255, 0),
         4: (0, 0, 255),

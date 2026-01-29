@@ -112,6 +112,7 @@ class Player(pygame.sprite.Sprite):
         self.state = "IDLE"
         self.facing_angle = 0.0
 
+
         self.max_health = 100
         self.health = 100
         self.potential_health = 100
@@ -138,6 +139,7 @@ class Player(pygame.sprite.Sprite):
         self.dash_timer = 0
         self.dash_cooldown = 500
         self.last_dash = 0
+        self.dash_progress = 0
 
         self.weapon = Weapon(self)
         self.attack_timer = 0
@@ -224,6 +226,7 @@ class Player(pygame.sprite.Sprite):
         self.stamina -= self.dash_cost
         self.stamina_regen_delay = 1000
         self.combo_count = 0 # Dash breaks combo
+        self.dash_progress = 0 # Reset progress
 
     def start_attack(self, combo=False):
         self.state = "ATTACK"
@@ -359,6 +362,7 @@ class Player(pygame.sprite.Sprite):
                 if self.game_instance:
                     self.game_instance.trigger_hit_stop(self.weapon.hit_stop_duration)
                     self.game_instance.trigger_screen_shake(200, self.weapon.shake_strength)
+                    # Spawn Blood
                     self.game_instance.spawn_blood(npc.rect.centerx, npc.rect.centery, 10)
 
     def check_bullet_collisions(self, npc_group):
@@ -488,12 +492,10 @@ class Player(pygame.sprite.Sprite):
 
         st_y_pos = start_y + hp_h + 5
         pygame.draw.rect(screen, (40, 40, 40), (start_x, st_y_pos, st_w, st_h))
-
         st_ratio = self.stamina / self.max_stamina
         curr_st_w = int(st_w * st_ratio)
         if curr_st_w > 0:
             pygame.draw.rect(screen, (40, 160, 40), (start_x, st_y_pos, curr_st_w, st_h))
-
 
         vial_x = start_x - 30
         vial_y = start_y + 5
@@ -508,6 +510,7 @@ class Player(pygame.sprite.Sprite):
         b_txt = font_sm.render(f"{self.bullets}", True, (255, 255, 255))
         screen.blit(b_txt, (bullet_x + 15, bullet_y - 10))
 
+
         self.draw_currency(screen)
 
     def draw_currency(self, screen):
@@ -518,10 +521,11 @@ class Player(pygame.sprite.Sprite):
         padding_y = 30
         
         pos_x = screen.get_width() - padding_x - text.get_width()
-        pos_y = padding_y
+        pos_y = padding_y # Top Right
+        
+        # Icon (Echo symbol)
         icon_x = pos_x - 30
         icon_y = pos_y + text.get_height() // 2
-
         pygame.draw.circle(screen, (200, 200, 255), (icon_x, icon_y), 8)
         pygame.draw.circle(screen, (255, 255, 255), (icon_x, icon_y), 4)
 

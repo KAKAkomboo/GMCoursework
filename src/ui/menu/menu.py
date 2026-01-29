@@ -7,7 +7,6 @@ class AshParticle:
         self.w = w
         self.h = h
         self.reset()
-        # Randomize initial position to fill screen
         self.x = random.randint(0, w)
         self.y = random.randint(0, h)
 
@@ -91,8 +90,8 @@ class Menu:
             p.update()
             p.draw(self.screen)
 
-        title_surf = self.font_title.render("DARK SOULS", True, (200, 200, 200))
-        shadow_surf = self.font_title.render("DARK SOULS", True, (0, 0, 0))
+        title_surf = self.font_title.render("BEBEBE", True, (200, 200, 200))
+        shadow_surf = self.font_title.render("BEBEBE", True, (0, 0, 0))
         title_rect = title_surf.get_rect(center=(current_w // 2, current_h * 0.25))
         self.screen.blit(shadow_surf, (title_rect.x + 4, title_rect.y + 4))
         self.screen.blit(title_surf, title_rect)
