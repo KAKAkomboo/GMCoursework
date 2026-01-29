@@ -54,6 +54,9 @@ class Game:
         self.blood_particles = []
 
         self.dialogue_box = None
+        self.quest_system = None
+        self.notification = None
+        self.task_panel = None
 
         self.npc_group = pygame.sprite.Group()
         self.initial_npc_positions = []
@@ -73,9 +76,9 @@ class Game:
     def set_dialogue_system(self, db):
         self.dialogue_box = db
 
-    def start_dialogue(self, name, tree):
+    def start_dialogue(self, name, tree, callback):
         if self.dialogue_box:
-            self.dialogue_box.start(name, tree)
+            self.dialogue_box.start(name, tree, callback)
 
     def trigger_hit_stop(self, duration_ms, scale=0.05):
         self.hit_stop_timer = duration_ms
@@ -90,6 +93,7 @@ class Game:
             self.blood_particles.append(BloodParticle(x, y))
 
     def update_juice(self, real_dt):
+        # Hit Stop Logic
         if self.hit_stop_timer > 0:
             self.hit_stop_timer -= real_dt
             if self.hit_stop_timer <= 0:
@@ -136,7 +140,6 @@ class Game:
         return None
 
     def update(self, keys, mouse_clicked=False, shoot=False, shoot_dir_right=True, lock_pressed=False):
-
         raw_dt = 16.0 
         
         self.update_juice(raw_dt)
@@ -174,7 +177,6 @@ class Game:
             fnpc.draw(self.screen, cam_x_int, cam_y_int)
 
         self.player.draw(self.screen, cam_x_int, cam_y_int)
-
         for bp in self.blood_particles:
             bp.draw(self.screen, cam_x_int, cam_y_int)
 
@@ -183,7 +185,7 @@ class Game:
         for i, npc in enumerate(npc_list):
             if i < len(self.initial_npc_positions):
                 pos = self.initial_npc_positions[i]
-                npc.pos = [float(pos[0]), float(pos[1])] # Reset pos as list
+                npc.pos = [float(pos[0]), float(pos[1])]
                 npc.rect.center = (int(npc.pos[0] * tile_size), int(npc.pos[1] * tile_size))
                 npc.health = getattr(npc, "max_health", npc.health)
                 npc.alive = True

@@ -64,6 +64,7 @@ game = Game(screen, mini_map)
 game.set_dialogue_system(dialogue_box)
 game.quest_system = quest_system
 game.notification = notification
+game.task_panel = tasks_panel
 
 checkpoints = [
     Checkpoint(5, 5),
@@ -146,6 +147,7 @@ def toggle_fullscreen():
         update_screen_references(new_screen)
 
 if save_manager.load(game.player):
+
     for cp in checkpoints:
         if cp.x == game.player.respawn_x and cp.y == game.player.respawn_y:
             cp.bonfire_lit = True
@@ -159,7 +161,6 @@ while running:
     events = pygame.event.get()
     keys = pygame.key.get_pressed()
     now = pygame.time.get_ticks()
-
     real_dt = clock.get_time()
 
     for event in events:

@@ -8,6 +8,7 @@ class DialogueBox:
         self.current_node = None
         self.dialogue_tree = {}
         self.npc_name = ""
+        self.action_callback = None
 
         self.height = 200
         self.padding = 20
@@ -36,9 +37,10 @@ class DialogueBox:
         self.icon_alpha = 255
         self.icon_alpha_dir = -5
 
-    def start(self, name, tree):
+    def start(self, name, tree, action_callback=None):
         self.npc_name = name
         self.dialogue_tree = tree
+        self.action_callback = action_callback
         self.set_node("start")
         self.active = True
 
@@ -53,8 +55,12 @@ class DialogueBox:
             self.close()
 
     def close(self):
+        if self.current_node and "action" in self.current_node and self.action_callback:
+            self.action_callback(self.current_node["action"])
+            
         self.active = False
         self.current_node = None
+        self.action_callback = None
 
     def handle_input(self, events):
         if not self.active: return False
@@ -80,6 +86,9 @@ class DialogueBox:
                             self.select_choice(self.choice_index)
                     else:
                         if event.key == pygame.K_SPACE or event.key == pygame.K_RETURN:
+                            if "action" in self.current_node and self.action_callback:
+                                self.action_callback(self.current_node["action"])
+
                             next_id = self.current_node.get("next")
                             if next_id:
                                 self.set_node(next_id)
@@ -91,6 +100,10 @@ class DialogueBox:
 
     def select_choice(self, index):
         choice = self.current_node["choices"][index]
+
+        if "action" in choice and self.action_callback:
+            self.action_callback(choice["action"])
+
         next_id = choice.get("next")
         
         if next_id == "exit":
@@ -173,7 +186,6 @@ class DialogueBox:
         words = text.split(' ')
         lines = []
         current_line = []
-
         for word in words:
             test_line = ' '.join(current_line + [word])
             w, h = self.font_text.size(test_line)
@@ -192,4 +204,4 @@ class DialogueBox:
             self.screen.blit(surf, (x, current_y))
             current_y += line_height
             
-        return current_y
+        return current_y # Return the Y position where the next element can start
