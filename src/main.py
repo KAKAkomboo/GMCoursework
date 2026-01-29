@@ -348,7 +348,7 @@ while running:
     elif current_state == "pause":
         for event in events:
             if event.type == pygame.KEYDOWN and event.key in (pygame.K_ESCAPE, pygame.K_p):
-                current_state = previous_state or "game"
+                current_state = "game"
                 pause_menu.hide()
 
         action = pause_menu.handle_ev(events)
@@ -381,7 +381,7 @@ while running:
     elif current_state == "pause_options":
         action = pause_option.handle_ev(events)
         if action == "back":
-            current_state = previous_state or "pause"
+            current_state = "pause"
             pause_option.hide()
         elif action == "toggle_fullscreen":
             toggle_fullscreen()
