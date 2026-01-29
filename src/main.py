@@ -7,6 +7,7 @@ from ui.pause_menu.pause_menu import PauseMenu
 from ui.pause_menu.task_panel import TasksPanel
 from ui.pause_menu.inventory_panel import InventoryPanel
 from src.ui.menu.sub_menus import BrightnessMenu, KeySettingsMenu, PlaceholderMenu, GameOptionsMenu
+from src.ui.elements.dialogue_box import DialogueBox
 from engine import Game
 from src.world.сheckpoint import Checkpoint
 from src.ui.menu.upgrade_menu import UpgradeMenu
@@ -18,8 +19,9 @@ pygame.init()
 if not pygame.display.get_init():
     pygame.display.init()
 
-initial_screen_width = 1280
-initial_screen_height = 720
+info = pygame.display.Info()
+initial_screen_width = info.current_w
+initial_screen_height = info.current_h
 
 def safe_set_mode(size, flags=0):
     try:
@@ -29,7 +31,7 @@ def safe_set_mode(size, flags=0):
         return pygame.display.set_mode(size, flags)
 
 pygame.display.set_caption("Game")
-screen = safe_set_mode((initial_screen_width, initial_screen_height))
+screen = safe_set_mode((initial_screen_width, initial_screen_height), pygame.RESIZABLE)
 clock = pygame.time.Clock()
 
 try:
@@ -44,7 +46,8 @@ pause_menu = PauseMenu(screen)
 tasks_panel = TasksPanel(screen)
 inventory_panel = InventoryPanel(screen)
 toast = Toast()
-death_screen = DeathScreen(screen.get_width(), screen.get_height()) # Use actual screen size
+death_screen = DeathScreen(screen.get_width(), screen.get_height())
+dialogue_box = DialogueBox(screen)
 
 brightness_menu = BrightnessMenu(screen)
 key_settings_menu = KeySettingsMenu(screen)
@@ -54,6 +57,7 @@ pc_menu = PlaceholderMenu(screen, "PC Settings")
 
 mini_map = [[1] + [0] * 78 for _ in range(10)]
 game = Game(screen, mini_map)
+game.set_dialogue_system(dialogue_box) # Connect dialogue system
 
 checkpoints = [
     Checkpoint(5, 5),
@@ -78,7 +82,7 @@ for cp in checkpoints:
 
 current_state = "menu"
 previous_state = None
-is_fullscreen = False
+is_maximized = True
 
 def update_screen_references(new_screen):
     global screen
@@ -98,9 +102,11 @@ def update_screen_references(new_screen):
     
     tasks_panel.screen = screen
     inventory_panel.screen = screen
-
+    
     death_screen.w = screen.get_width()
     death_screen.h = screen.get_height()
+    
+    dialogue_box.screen = screen
 
     brightness_menu.screen = screen
     brightness_menu.recalculate_layout()
@@ -116,18 +122,19 @@ def update_screen_references(new_screen):
     game.screen = screen
 
 def toggle_fullscreen():
-    global is_fullscreen
+    global is_maximized
     try:
-        if is_fullscreen:
-            new_screen = safe_set_mode((initial_screen_width, initial_screen_height))
-            is_fullscreen = False
+        if is_maximized:
+            new_screen = safe_set_mode((1280, 720), pygame.RESIZABLE)
+            is_maximized = False
         else:
-            new_screen = safe_set_mode((0, 0), pygame.FULLSCREEN)
-            is_fullscreen = True
+            info = pygame.display.Info()
+            new_screen = safe_set_mode((info.current_w, info.current_h), pygame.RESIZABLE)
+            is_maximized = True
         update_screen_references(new_screen)
     except pygame.error:
-        new_screen = safe_set_mode((initial_screen_width, initial_screen_height))
-        is_fullscreen = False
+        new_screen = safe_set_mode((1280, 720), pygame.RESIZABLE)
+        is_maximized = False
         update_screen_references(new_screen)
 
 if save_manager.load(game.player):
@@ -137,17 +144,21 @@ if save_manager.load(game.player):
 
 running = True
 while running:
-    if not pygame.display.get_surface(): # If window is closed or lost
-        new_screen = safe_set_mode((initial_screen_width, initial_screen_height))
+    if not pygame.display.get_surface():
+        new_screen = safe_set_mode((initial_screen_width, initial_screen_height), pygame.RESIZABLE)
         update_screen_references(new_screen)
 
     events = pygame.event.get()
     keys = pygame.key.get_pressed()
     now = pygame.time.get_ticks()
 
+    real_dt = clock.get_time()
+
     for event in events:
         if event.type == pygame.QUIT:
             running = False
+        if event.type == pygame.VIDEORESIZE:
+            update_screen_references(safe_set_mode(event.size, pygame.RESIZABLE))
 
     if current_state == "menu":
         action = menu.handle_ev(events)
@@ -227,48 +238,54 @@ while running:
         activate_checkpoint = False
         
         any_menu_open = any(cp.menu_open or cp.upgrade_open for cp in checkpoints)
+        dialogue_active = dialogue_box.active
 
-        for event in events:
-            if event.type == pygame.MOUSEBUTTONDOWN:
-                if event.button == 1:
-                    mouse_clicked = True
-                elif event.button == 3:
-                    if any_menu_open:
+
+        if dialogue_active:
+            dialogue_box.handle_input(events)
+        else:
+            for event in events:
+                if event.type == pygame.MOUSEBUTTONDOWN:
+                    if event.button == 1:
+                        mouse_clicked = True
+                    elif event.button == 3:
+                        if any_menu_open:
+                            for cp in checkpoints:
+                                cp.close_all()
+                        else:
+                            shoot = True
+                            mx, _ = pygame.mouse.get_pos()
+                            player_px = int(game.player.x * tile_size - game.camera_x + game.player.image.get_width() // 2)
+                            shoot_dir_right = mx >= player_px
+                elif event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_TAB:
+                        lock_pressed = True
+                    elif event.key == pygame.K_e:
+                        activate_checkpoint = True
+                    elif event.key == pygame.K_ESCAPE:
+                        handled_by_cp = False
                         for cp in checkpoints:
-                            cp.close_all()
-                    else:
-                        shoot = True
-                        mx, _ = pygame.mouse.get_pos()
-                        player_px = int(game.player.x * tile_size - game.camera_x + game.player.image.get_width() // 2)
-                        shoot_dir_right = mx >= player_px
-            elif event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_TAB:
-                    lock_pressed = True
-                elif event.key == pygame.K_e:
-                    activate_checkpoint = True
-                elif event.key == pygame.K_ESCAPE:
-                    handled_by_cp = False
-                    for cp in checkpoints:
-                        if cp.upgrade_open:
-                            cp.upgrade_open = False
-                            cp.menu_open = True
-                            handled_by_cp = True
-                        elif cp.menu_open:
-                            cp.close_all()
-                            handled_by_cp = True
-                    
-                    if not handled_by_cp:
-                        current_state = "pause"
-                        previous_state = "game"
-                        pause_menu.show()
+                            if cp.upgrade_open:
+                                cp.upgrade_open = False
+                                cp.menu_open = True
+                                handled_by_cp = True
+                            elif cp.menu_open:
+                                cp.close_all()
+                                handled_by_cp = True
+                        
+                        if not handled_by_cp:
+                            current_state = "pause"
+                            previous_state = "game"
+                            pause_menu.show()
 
         game.handle_events(events)
 
-        if not any_menu_open:
+        if not any_menu_open and not dialogue_active:
             game.update(keys, mouse_clicked, shoot, shoot_dir_right, lock_pressed)
 
-        for fnpc in game.friendly_npcs:
-            fnpc.handle_input(events)
+        if not dialogue_active:
+            for fnpc in game.friendly_npcs:
+                fnpc.handle_input(events)
 
         for cp in checkpoints:
             cp.update(game.player, now)
@@ -297,6 +314,9 @@ while running:
                     cp.upgrade_open = False
                     cp.menu_open = True
 
+        dialogue_box.update(real_dt)
+        dialogue_box.draw()
+
         toast.draw(screen, font_small)
 
         if not game.player.alive:
@@ -310,7 +330,7 @@ while running:
         else:
             death_screen.hide()
 
-        if not any_menu_open and keys[pygame.K_F5]:
+        if not any_menu_open and not dialogue_active and keys[pygame.K_F5]:
             save_manager.save(game.player)
             toast.show("Updated checkpoint.", 1200)
 

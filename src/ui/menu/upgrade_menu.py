@@ -4,8 +4,8 @@ class UpgradeMenu:
     def __init__(self):
         self.attributes = ["Health", "Stamina", "Dexterity", "Strength", "Blood Shade", "Sacrament"]
         self.selected_index = 0
-        self.base_cost = 50
-        self.cost_scale = 1.25
+        self.base_cost = 100
+        self.cost_scale = 1.1
         self.confirm_disabled = False
 
     def current_values(self, player):
@@ -29,38 +29,42 @@ class UpgradeMenu:
         vals["Sacrament"] = vals["Sacrament"] + 1
         return vals
 
-    def cost_for(self, player, attr):
-        level_like = 0
+    def get_level_for_attr(self, player, attr):
+
         if attr == "Health":
-            level_like = getattr(player, "max_health", 100) // 10
+            return (getattr(player, "max_health", 100) - 100) // 10
         elif attr == "Stamina":
-            level_like = getattr(player, "max_stamina", 100) // 10
+            return (getattr(player, "max_stamina", 100) - 100) // 10
         elif attr == "Dexterity":
-            level_like = getattr(player, "dexterity", 0)
+            return getattr(player, "dexterity", 0)
         elif attr == "Strength":
-            level_like = getattr(player, "strength", 0)
+            return getattr(player, "strength", 0)
         elif attr == "Blood Shade":
-            level_like = getattr(player, "blood_shade", 0)
+            return getattr(player, "blood_shade", 0)
         elif attr == "Sacrament":
-            level_like = getattr(player, "sacrament", 0)
-        cost = int(self.base_cost * (self.cost_scale ** max(0, level_like)))
-        return min(cost, 999999)
+            return getattr(player, "sacrament", 0)
+        return 0
+
+    def cost_for(self, player, attr):
+        current_level = self.get_level_for_attr(player, attr)
+        cost = int(self.base_cost * (self.cost_scale ** current_level))
+        return max(cost, 1)
 
     def apply_upgrade(self, player, attr):
         if attr == "Health":
-            player.max_health = getattr(player, "max_health", 100) + 10
+            player.max_health += 10
             player.health = player.max_health
         elif attr == "Stamina":
-            player.max_stamina = getattr(player, "max_stamina", 100) + 10
+            player.max_stamina += 10
             player.stamina = player.max_stamina
         elif attr == "Dexterity":
-            player.dexterity = getattr(player, "dexterity", 0) + 1
+            player.dexterity += 1
         elif attr == "Strength":
-            player.strength = getattr(player, "strength", 0) + 1
+            player.strength += 1
         elif attr == "Blood Shade":
-            player.blood_shade = getattr(player, "blood_shade", 0) + 1
+            player.blood_shade += 1
         elif attr == "Sacrament":
-            player.sacrament = getattr(player, "sacrament", 0) + 1
+            player.sacrament += 1
 
     def draw(self, screen, player, font, font_small):
         w = screen.get_width()
@@ -91,7 +95,7 @@ class UpgradeMenu:
         next_vals = self.next_values(player)
         attr = self.attributes[self.selected_index]
         cost = self.cost_for(player, attr)
-        currency = getattr(player, "currency", getattr(player, "souls", 0))
+        currency = getattr(player, "currency", 0)
         right_x = list_x + left_w + 20
         name_t = font.render(attr, True, (255, 255, 255))
         screen.blit(name_t, (right_x, list_y))
@@ -120,33 +124,42 @@ class UpgradeMenu:
 
     def handle_input(self, player, events, keys, confirm_btn, back_btn, toast, level_sound):
         mx, my = pygame.mouse.get_pos()
-        left = pygame.mouse.get_pressed()[0]
-        if keys[pygame.K_ESCAPE]:
-            return "close"
+        left_mouse_pressed = pygame.mouse.get_pressed()[0]
+
         for event in events:
             if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_UP:
+                if event.key == pygame.K_ESCAPE:
+                    return "close"
+                elif event.key == pygame.K_UP:
                     self.selected_index = max(0, self.selected_index - 1)
                 elif event.key == pygame.K_DOWN:
                     self.selected_index = min(len(self.attributes) - 1, self.selected_index + 1)
-        if left:
-            for i, name in enumerate(self.attributes):
-                r = pygame.Rect(0, 0, 0, 0)
-            if confirm_btn and confirm_btn.collidepoint(mx, my):
-                attr = self.attributes[self.selected_index]
-                cost = self.cost_for(player, attr)
-                currency = getattr(player, "currency", getattr(player, "souls", 0))
-                if currency >= cost:
-                    self.apply_upgrade(player, attr)
-                    if hasattr(player, "currency"):
+                elif event.key == pygame.K_RETURN: # Handle Enter key for selection
+                    attr = self.attributes[self.selected_index]
+                    cost = self.cost_for(player, attr)
+                    currency = getattr(player, "currency", 0)
+                    if currency >= cost:
+                        self.apply_upgrade(player, attr)
                         player.currency -= cost
-                    elif hasattr(player, "souls"):
-                        player.souls -= cost
-                    if level_sound:
-                        level_sound.play()
-                    toast.show("Upgrade successful.", 1200)
-                else:
-                    toast.show("Not enough currency.", 1200)
-            if back_btn and back_btn.collidepoint(mx, my):
-                return "back"
+                        if level_sound:
+                            level_sound.play()
+                        toast.show("Upgrade successful.", 1200)
+                    else:
+                        toast.show("Not enough currency.", 1200)
+            
+            elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+                if confirm_btn and confirm_btn.collidepoint(mx, my):
+                    attr = self.attributes[self.selected_index]
+                    cost = self.cost_for(player, attr)
+                    currency = getattr(player, "currency", 0)
+                    if currency >= cost:
+                        self.apply_upgrade(player, attr)
+                        player.currency -= cost
+                        if level_sound:
+                            level_sound.play()
+                        toast.show("Upgrade successful.", 1200)
+                    else:
+                        toast.show("Not enough currency.", 1200)
+                elif back_btn and back_btn.collidepoint(mx, my):
+                    return "back"
         return None
