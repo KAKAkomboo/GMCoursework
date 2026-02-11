@@ -11,12 +11,14 @@ from src.ui.elements.dialogue_box import DialogueBox
 # from src.ui.elements.notification import Notification
 # from src.core.quest_system import QuestSystem
 from src.ui.cutscene import Cutscene
+from src.ui.weather import Rain
 from engine import Game
 from src.world.сheckpoint import Checkpoint
 from src.ui.menu.upgrade_menu import UpgradeMenu
 from core.save_manager import SaveManager
 from src.ui.elements.toast import Toast
 from src.ui.elements.death_screen import DeathScreen
+from src.world.locations.port import map_data as port_map
 
 pygame.init()
 if not pygame.display.get_init():
@@ -51,6 +53,7 @@ toast = Toast()
 death_screen = DeathScreen(screen.get_width(), screen.get_height())
 dialogue_box = DialogueBox(screen)
 # notification = Notification(screen)
+rain = Rain(screen, intensity=100) # Reduced intensity
 
 brightness_menu = BrightnessMenu(screen)
 key_settings_menu = KeySettingsMenu(screen)
@@ -60,8 +63,7 @@ pc_menu = PlaceholderMenu(screen, "PC Settings")
 
 # quest_system = QuestSystem()
 
-mini_map = [[1] + [0] * 78 for _ in range(10)]
-game = Game(screen, mini_map)
+game = Game(screen, port_map) # Use port_map
 game.set_dialogue_system(dialogue_box)
 # game.quest_system = quest_system
 # game.notification = notification
@@ -89,9 +91,9 @@ for cp in checkpoints:
     cp.set_sounds(save_sound, level_sound)
 
 cutscene_text = [
-    "sebgruieroig",
-    "JNEFOUn wefnweaiog arefiaiovj",
-    "krjagfiuarg OEJFOUIWFE wioefjoij"
+    "Світ змінився.",
+    "Нічні тіні поглинули спокій містечка, а шепіт стародавніх легенд став реальністю.",
+    "Твоє завдання — розкрити правду, доки не стало запізно."
 ]
 intro_cutscene = Cutscene(screen, cutscene_text)
 
@@ -123,6 +125,9 @@ def update_screen_references(new_screen):
     
     dialogue_box.screen = screen
     dialogue_box.y = screen.get_height() - dialogue_box.height
+    
+    rain.screen = screen
+    rain.recalculate_layout()
     
     # notification.screen = screen
     brightness_menu.screen = screen
@@ -320,6 +325,10 @@ while running:
                 cp.open_menu(game.player)
 
         game.draw()
+        
+        # Draw Rain
+        rain.update()
+        rain.draw()
 
         if brightness_menu.brightness < 1.0:
             darkness = pygame.Surface(screen.get_size(), pygame.SRCALPHA)
