@@ -53,7 +53,7 @@ toast = Toast()
 death_screen = DeathScreen(screen.get_width(), screen.get_height())
 dialogue_box = DialogueBox(screen)
 # notification = Notification(screen)
-rain = Rain(screen, intensity=100) # Reduced intensity
+rain = Rain(screen, intensity=10)
 
 brightness_menu = BrightnessMenu(screen)
 key_settings_menu = KeySettingsMenu(screen)
@@ -63,7 +63,7 @@ pc_menu = PlaceholderMenu(screen, "PC Settings")
 
 # quest_system = QuestSystem()
 
-game = Game(screen, port_map) # Use port_map
+game = Game(screen, port_map)
 game.set_dialogue_system(dialogue_box)
 # game.quest_system = quest_system
 # game.notification = notification
@@ -91,9 +91,9 @@ for cp in checkpoints:
     cp.set_sounds(save_sound, level_sound)
 
 cutscene_text = [
-    "Світ змінився.",
-    "Нічні тіні поглинули спокій містечка, а шепіт стародавніх легенд став реальністю.",
-    "Твоє завдання — розкрити правду, доки не стало запізно."
+    "rfoliwnefnok",
+    "wi4ji94494949",
+    "wnrgiowejfweifmoweif"
 ]
 intro_cutscene = Cutscene(screen, cutscene_text)
 
@@ -325,8 +325,7 @@ while running:
                 cp.open_menu(game.player)
 
         game.draw()
-        
-        # Draw Rain
+
         rain.update()
         rain.draw()
 
