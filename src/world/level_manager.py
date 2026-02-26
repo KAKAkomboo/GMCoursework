@@ -38,15 +38,15 @@ class Map:
                     pass
             return self.create_texture(fallback_color)
 
-        self.textures[0] = get_texture("src/assets/textures/ground/water.png", (20, 30, 70))
+        self.textures[0] = get_texture("src/assets/images/textures/ground/water.png", (20, 30, 70))
 
-        self.textures[1] = get_texture("src/assets/textures/ground/grass.png", (50, 60, 40))
+        self.textures[1] = get_texture("src/assets/images/textures/ground/grass.png", (50, 60, 40))
 
-        self.textures[2] = get_texture("src/assets/textures/blocks/wood.png", (130, 110, 90))
+        self.textures[2] = get_texture("src/assets/images/textures/blocks/wood.png", (130, 110, 90))
 
-        self.textures[3] = get_texture("src/assets/textures/ground/path.png", (80, 70, 60))
+        self.textures[3] = get_texture("src/assets/images/textures/ground/path.png", (80, 70, 60))
 
-        self.textures[4] = get_texture("src/assets/textures/ground/wather_grass.png", (30, 45, 55))
+        self.textures[4] = get_texture("src/assets/images/textures/ground/wather_grass.png", (30, 45, 55))
 
     def create_texture(self, color):
         s = pygame.Surface((tile_size, tile_size))

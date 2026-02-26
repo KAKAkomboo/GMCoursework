@@ -11,7 +11,7 @@ from src.ui.elements.dialogue_box import DialogueBox
 # from src.ui.elements.notification import Notification
 # from src.core.quest_system import QuestSystem
 from src.ui.cutscene import Cutscene
-from src.ui.weather import Rain
+from src.ui.weather import Rain, Fog
 from engine import Game
 from src.world.сheckpoint import Checkpoint
 from src.ui.menu.upgrade_menu import UpgradeMenu
@@ -53,7 +53,8 @@ toast = Toast()
 death_screen = DeathScreen(screen.get_width(), screen.get_height())
 dialogue_box = DialogueBox(screen)
 # notification = Notification(screen)
-rain = Rain(screen, intensity=10)
+rain = Rain(screen, intensity=100)
+fog = Fog(screen, density=30) # Fog system
 
 brightness_menu = BrightnessMenu(screen)
 key_settings_menu = KeySettingsMenu(screen)
@@ -128,6 +129,9 @@ def update_screen_references(new_screen):
     
     rain.screen = screen
     rain.recalculate_layout()
+    
+    fog.screen = screen
+    fog.recalculate_layout()
     
     # notification.screen = screen
     brightness_menu.screen = screen
@@ -328,6 +332,9 @@ while running:
 
         rain.update()
         rain.draw()
+        
+        fog.update()
+        fog.draw()
 
         if brightness_menu.brightness < 1.0:
             darkness = pygame.Surface(screen.get_size(), pygame.SRCALPHA)
