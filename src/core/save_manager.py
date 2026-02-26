@@ -39,8 +39,8 @@ class SaveManager :
         player .death_x =data .get ("death_x",0 )
         player .death_y =data .get ("death_y",0 )
 
-        player .respawn_x =data .get ("respawn_x",player .death_x )
-        player .respawn_y =data .get ("respawn_y",player .death_y )
+        player.respawn_x =data .get ("respawn_x",player .death_x )
+        player.respawn_y =data .get ("respawn_y",player .death_y )
 
         player .x =player .respawn_x 
         player .y =player .respawn_y 
