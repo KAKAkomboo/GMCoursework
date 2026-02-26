@@ -1,11 +1,12 @@
 import pygame
 from src.core.settings import WHITE
 
+
 class TasksPanel:
     def __init__(self, screen):
         self.screen = screen
         self.visible = False
-        
+
         try:
             self.font_title = pygame.font.SysFont("timesnewroman", 32, bold=True)
             self.font = pygame.font.SysFont("timesnewroman", 24)
@@ -22,15 +23,15 @@ class TasksPanel:
     def remove_quest(self, quest_title):
         self.active_quests = [q for q in self.active_quests if q.title != quest_title]
 
-    def show(self): 
+    def show(self):
         self.visible = True
 
-    def hide(self): 
+    def hide(self):
         self.visible = False
 
     def draw(self):
         if not self.visible: return
-        
+
         current_w, current_h = self.screen.get_size()
 
         overlay = pygame.Surface((current_w, current_h), pygame.SRCALPHA)

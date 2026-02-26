@@ -8,8 +8,7 @@ from ui.pause_menu.task_panel import TasksPanel
 from ui.pause_menu.inventory_panel import InventoryPanel
 from src.ui.menu.sub_menus import BrightnessMenu, KeySettingsMenu, PlaceholderMenu, GameOptionsMenu
 from src.ui.elements.dialogue_box import DialogueBox
-# from src.ui.elements.notification import Notification
-# from src.core.quest_system import QuestSystem
+
 from src.ui.cutscene import Cutscene
 from src.ui.weather import Rain, Fog
 from engine import Game
@@ -19,6 +18,8 @@ from core.save_manager import SaveManager
 from src.ui.elements.toast import Toast
 from src.ui.elements.death_screen import DeathScreen
 from src.world.locations.port import map_data as port_map
+from src.world.locations.village import map_data as village_map
+from src.world.level_manager import Map
 
 pygame.init()
 if not pygame.display.get_init():
@@ -27,12 +28,14 @@ if not pygame.display.get_init():
 initial_screen_width = 1280
 initial_screen_height = 720
 
+
 def safe_set_mode(size, flags=0):
     try:
         return pygame.display.set_mode(size, flags)
     except pygame.error:
         pygame.display.init()
         return pygame.display.set_mode(size, flags)
+
 
 pygame.display.set_caption("Game")
 screen = safe_set_mode((initial_screen_width, initial_screen_height), pygame.RESIZABLE)
@@ -52,9 +55,9 @@ inventory_panel = InventoryPanel(screen)
 toast = Toast()
 death_screen = DeathScreen(screen.get_width(), screen.get_height())
 dialogue_box = DialogueBox(screen)
-# notification = Notification(screen)
+
 rain = Rain(screen, intensity=100)
-fog = Fog(screen, density=30) # Fog system
+fog = Fog(screen, density=30)
 
 brightness_menu = BrightnessMenu(screen)
 key_settings_menu = KeySettingsMenu(screen)
@@ -62,13 +65,9 @@ game_options_menu = GameOptionsMenu(screen)
 network_menu = PlaceholderMenu(screen, "Network Settings")
 pc_menu = PlaceholderMenu(screen, "PC Settings")
 
-# quest_system = QuestSystem()
-
+current_map_name = "port"
 game = Game(screen, port_map)
 game.set_dialogue_system(dialogue_box)
-# game.quest_system = quest_system
-# game.notification = notification
-# game.task_panel = tasks_panel
 
 checkpoints = [
     Checkpoint(5, 5),
@@ -92,9 +91,9 @@ for cp in checkpoints:
     cp.set_sounds(save_sound, level_sound)
 
 cutscene_text = [
-    "rfoliwnefnok",
-    "wi4ji94494949",
-    "wnrgiowejfweifmoweif"
+    "Світ змінився.",
+    "Нічні тіні поглинули спокій містечка, а шепіт стародавніх легенд став реальністю.",
+    "Твоє завдання — розкрити правду, доки не стало запізно."
 ]
 intro_cutscene = Cutscene(screen, cutscene_text)
 
@@ -102,38 +101,70 @@ current_state = "menu"
 previous_state = None
 is_fullscreen = False
 
+
+def load_map(map_name, entry_point="default"):
+    global game, current_map_name
+    current_map_name = map_name
+
+    if map_name == "port":
+        new_map_data = port_map
+        if entry_point == "from_village":
+            spawn_x, spawn_y = 20, 2
+        else:
+            spawn_x, spawn_y = 20, 35
+
+    elif map_name == "village":
+        new_map_data = village_map
+        if entry_point == "from_port":
+            spawn_x, spawn_y = 20, 38
+        else:
+            spawn_x, spawn_y = 20, 38
+
+    game.map = Map(new_map_data)
+    game.player.map = game.map
+
+    game.player.x = spawn_x
+    game.player.y = spawn_y
+    game.player.target_x = spawn_x
+    game.player.target_y = spawn_y
+
+    game.enemies.empty()
+    game.spawn_enemies()
+
+    toast.show(f"Entered {map_name.capitalize()}", 2000)
+
+
 def update_screen_references(new_screen):
     global screen
     screen = new_screen
 
     menu.screen = screen
     menu.recalculate_layout()
-    
+
     main_option.screen = screen
     main_option.recalculate_layout()
-    
+
     pause_option.screen = screen
     pause_option.recalculate_layout()
-    
+
     pause_menu.screen = screen
     pause_menu.recalculate_layout()
-    
+
     tasks_panel.screen = screen
     inventory_panel.screen = screen
-    
+
     death_screen.w = screen.get_width()
     death_screen.h = screen.get_height()
-    
+
     dialogue_box.screen = screen
     dialogue_box.y = screen.get_height() - dialogue_box.height
-    
+
     rain.screen = screen
     rain.recalculate_layout()
-    
+
     fog.screen = screen
     fog.recalculate_layout()
-    
-    # notification.screen = screen
+
     brightness_menu.screen = screen
     brightness_menu.recalculate_layout()
     key_settings_menu.screen = screen
@@ -144,10 +175,11 @@ def update_screen_references(new_screen):
     network_menu.recalculate_layout()
     pc_menu.screen = screen
     pc_menu.recalculate_layout()
-    
+
     intro_cutscene.screen = screen
-    
+
     game.screen = screen
+
 
 def toggle_fullscreen():
     global is_fullscreen
@@ -164,6 +196,7 @@ def toggle_fullscreen():
         new_screen = safe_set_mode((initial_screen_width, initial_screen_height), pygame.RESIZABLE)
         is_fullscreen = False
         update_screen_references(new_screen)
+
 
 if save_manager.load(game.player):
 
@@ -191,10 +224,10 @@ while running:
     if current_state == "cutscene":
         for event in events:
             intro_cutscene.handle_event(event)
-        
+
         if not intro_cutscene.update(real_dt):
             current_state = "game"
-        
+
         intro_cutscene.draw()
 
     elif current_state == "menu":
@@ -238,14 +271,14 @@ while running:
             if res == "back":
                 current_state = "main_options"
         game_options_menu.draw()
-        
+
     elif current_state == "brightness":
         for event in events:
             res = brightness_menu.handle_ev(event)
             if res == "back":
                 current_state = "main_options"
         brightness_menu.draw()
-        
+
     elif current_state == "key_settings":
         for event in events:
             res = key_settings_menu.handle_ev(event)
@@ -273,7 +306,7 @@ while running:
         shoot_dir_right = True
         lock_pressed = False
         activate_checkpoint = False
-        
+
         any_menu_open = any(cp.menu_open or cp.upgrade_open for cp in checkpoints)
         dialogue_active = dialogue_box.active
 
@@ -291,7 +324,8 @@ while running:
                         else:
                             shoot = True
                             mx, _ = pygame.mouse.get_pos()
-                            player_px = int(game.player.x * tile_size - game.camera_x + game.player.image.get_width() // 2)
+                            player_px = int(
+                                game.player.x * tile_size - game.camera_x + game.player.image.get_width() // 2)
                             shoot_dir_right = mx >= player_px
                 elif event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_TAB:
@@ -308,7 +342,7 @@ while running:
                             elif cp.menu_open:
                                 cp.close_all()
                                 handled_by_cp = True
-                        
+
                         if not handled_by_cp:
                             current_state = "pause"
                             previous_state = "game"
@@ -318,6 +352,12 @@ while running:
 
         if not any_menu_open and not dialogue_active:
             game.update(keys, mouse_clicked, shoot, shoot_dir_right, lock_pressed)
+
+            if game.map.check_trigger(game.player.x, game.player.y):
+                if current_map_name == "port":
+                    load_map("village", entry_point="from_port")
+                elif current_map_name == "village":
+                    load_map("port", entry_point="from_village")
 
         if not dialogue_active:
             for fnpc in game.friendly_npcs:
@@ -332,7 +372,7 @@ while running:
 
         rain.update()
         rain.draw()
-        
+
         fog.update()
         fog.draw()
 
@@ -359,9 +399,6 @@ while running:
         dialogue_box.update(real_dt)
         dialogue_box.draw()
 
-        # notification.update(real_dt)
-        # notification.draw()
-
         toast.draw(screen, font_small)
 
         if not game.player.alive:
@@ -382,7 +419,7 @@ while running:
     elif current_state == "pause":
         for event in events:
             if event.type == pygame.KEYDOWN and event.key in (pygame.K_ESCAPE, pygame.K_p):
-                current_state = "game" # Go back to game
+                current_state = "game"
                 pause_menu.hide()
 
         action = pause_menu.handle_ev(events)
@@ -419,7 +456,7 @@ while running:
             pause_option.hide()
         elif action == "toggle_fullscreen":
             toggle_fullscreen()
-        
+
         game.draw()
         pause_option.draw()
 

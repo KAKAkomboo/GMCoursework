@@ -1,6 +1,7 @@
 import pygame
 from src.core.settings import screen_width, screen_height
 
+
 class BaseSubMenu:
     def __init__(self, screen, title):
         self.screen = screen
@@ -11,7 +12,7 @@ class BaseSubMenu:
         except:
             self.font_title = pygame.font.SysFont(None, 40)
             self.font_item = pygame.font.SysFont(None, 28)
-            
+
         self.recalculate_layout()
 
     def recalculate_layout(self):
@@ -24,7 +25,7 @@ class BaseSubMenu:
     def draw_background(self):
 
         self.recalculate_layout()
-        
+
         current_w, current_h = self.screen.get_size()
 
         overlay = pygame.Surface((current_w, current_h), pygame.SRCALPHA)
@@ -45,11 +46,12 @@ class BaseSubMenu:
         hint_rect = hint.get_rect(center=(current_w // 2, self.panel_y + self.panel_h - 30))
         self.screen.blit(hint, hint_rect)
 
+
 class BrightnessMenu(BaseSubMenu):
     def __init__(self, screen):
         super().__init__(screen, "Brightness")
-        self.brightness = 1.0 # 1.0 = Normal, 0.0 = Dark
-        self.slider_rect = pygame.Rect(0, 0, 400, 6) # Placeholder, updated in draw
+        self.brightness = 1.0
+        self.slider_rect = pygame.Rect(0, 0, 400, 6)
         self.dragging = False
 
     def draw(self):
@@ -67,11 +69,11 @@ class BrightnessMenu(BaseSubMenu):
         pygame.draw.circle(self.screen, (255, 255, 255), (knob_x, self.slider_rect.centery), 10)
 
         val_text = self.font_item.render(f"{int(self.brightness * 100)}%", True, (255, 255, 255))
-        self.screen.blit(val_text, (self.slider_rect.centerx - val_text.get_width()//2, self.slider_rect.y - 40))
+        self.screen.blit(val_text, (self.slider_rect.centerx - val_text.get_width() // 2, self.slider_rect.y - 40))
 
     def handle_ev(self, event):
         self.slider_rect = pygame.Rect(self.panel_x + 50, self.panel_y + 180, 400, 6)
-        
+
         if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
             hitbox = self.slider_rect.inflate(20, 20)
             if hitbox.collidepoint(event.pos):
@@ -94,6 +96,7 @@ class BrightnessMenu(BaseSubMenu):
         rel = (mouse_x - self.slider_rect.x) / self.slider_rect.w
         self.brightness = max(0.0, min(1.0, rel))
 
+
 class KeySettingsMenu(BaseSubMenu):
     def __init__(self, screen):
         super().__init__(screen, "Controls")
@@ -111,10 +114,10 @@ class KeySettingsMenu(BaseSubMenu):
         start_y = self.panel_y + 100
         for i, (action, key) in enumerate(self.keys):
             y = start_y + i * 35
-            
+
             act_surf = self.font_item.render(action, True, (180, 180, 180))
             key_surf = self.font_item.render(key, True, (255, 255, 255))
-            
+
             self.screen.blit(act_surf, (self.panel_x + 50, y))
             self.screen.blit(key_surf, (self.panel_x + 300, y))
 
@@ -122,6 +125,7 @@ class KeySettingsMenu(BaseSubMenu):
         if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
             return "back"
         return None
+
 
 class GameOptionsMenu(BaseSubMenu):
     def __init__(self, screen):
@@ -141,6 +145,7 @@ class GameOptionsMenu(BaseSubMenu):
         if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
             return "back"
         return None
+
 
 class PlaceholderMenu(BaseSubMenu):
     def __init__(self, screen, title, msg="Feature not available yet."):

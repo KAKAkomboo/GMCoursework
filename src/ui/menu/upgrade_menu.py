@@ -1,5 +1,6 @@
 import pygame
 
+
 class UpgradeMenu:
     def __init__(self):
         self.attributes = ["Health", "Stamina", "Dexterity", "Strength", "Blood Shade", "Sacrament"]
@@ -134,7 +135,7 @@ class UpgradeMenu:
                     self.selected_index = max(0, self.selected_index - 1)
                 elif event.key == pygame.K_DOWN:
                     self.selected_index = min(len(self.attributes) - 1, self.selected_index + 1)
-                elif event.key == pygame.K_RETURN: # Handle Enter key for selection
+                elif event.key == pygame.K_RETURN:
                     attr = self.attributes[self.selected_index]
                     cost = self.cost_for(player, attr)
                     currency = getattr(player, "currency", 0)
@@ -146,7 +147,7 @@ class UpgradeMenu:
                         toast.show("Upgrade successful.", 1200)
                     else:
                         toast.show("Not enough currency.", 1200)
-            
+
             elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                 if confirm_btn and confirm_btn.collidepoint(mx, my):
                     attr = self.attributes[self.selected_index]

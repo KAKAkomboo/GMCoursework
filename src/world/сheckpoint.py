@@ -2,6 +2,7 @@ import pygame
 import random
 from src.core.settings import tile_size
 
+
 class Checkpoint(pygame.sprite.Sprite):
     def __init__(self, x, y):
         super().__init__()
@@ -9,7 +10,6 @@ class Checkpoint(pygame.sprite.Sprite):
         self.y = int(y)
         self.image = pygame.Surface((tile_size * 2, tile_size * 2), pygame.SRCALPHA)
         self.rect = self.image.get_rect(center=(self.x * tile_size + tile_size / 2, self.y * tile_size + tile_size / 2))
-        
 
         self.fire_particles = []
         self.bonfire_lit = False
@@ -45,9 +45,9 @@ class Checkpoint(pygame.sprite.Sprite):
         self.active = self.is_player_near(player)
 
     def update_fire_particles(self):
-        # Add new particles
+
         if self.bonfire_lit:
-            if len(self.fire_particles) < 50: # Max particles
+            if len(self.fire_particles) < 50:
                 self.fire_particles.append(self.create_particle())
 
         for particle in self.fire_particles:
@@ -85,10 +85,10 @@ class Checkpoint(pygame.sprite.Sprite):
 
         if world:
             world.respawn_enemies()
-        
+
         if self.save_sound:
             self.save_sound.play()
-            
+
         toast.show("Rested. Enemies have respawned.", 2000)
         self.close_all()
 
@@ -104,7 +104,7 @@ class Checkpoint(pygame.sprite.Sprite):
             pygame.draw.circle(screen, particle['color'], pos, int(particle['life'] / 4))
 
         self.draw_prompt(screen, camera_x, camera_y, font_small)
-        
+
         if self.menu_open and not self.upgrade_open:
             return self.draw_menu(screen, font, font_small)
         return None
@@ -112,19 +112,19 @@ class Checkpoint(pygame.sprite.Sprite):
     def draw_prompt(self, screen, camera_x, camera_y, font_small):
         if not self.active or self.menu_open or self.upgrade_open:
             return
-            
+
         self.prompt_alpha += self.prompt_dir
         if self.prompt_alpha <= 80 or self.prompt_alpha >= 255:
             self.prompt_dir *= -1
-            
+
         prompt_text = "Light Bonfire" if not self.bonfire_lit else "Rest at Bonfire"
         text = font_small.render(f"Press E to {prompt_text}", True, (255, 255, 255))
         s = pygame.Surface(text.get_size(), pygame.SRCALPHA)
         s.fill((0, 0, 0, 120))
-        
+
         px = int(self.rect.centerx - camera_x - text.get_width() // 2)
         py = int(self.rect.top - camera_y - 30)
-        
+
         screen.blit(s, (px, py))
         text.set_alpha(self.prompt_alpha)
         screen.blit(text, (px, py))
@@ -132,50 +132,50 @@ class Checkpoint(pygame.sprite.Sprite):
     def draw_menu(self, screen, font, font_small):
         if not self.menu_open or self.upgrade_open:
             return
-            
+
         w, h = screen.get_width(), screen.get_height()
         overlay = pygame.Surface((w, h), pygame.SRCALPHA)
         overlay.fill((0, 0, 0, 180))
         screen.blit(overlay, (0, 0))
-        
+
         title_text = "Bonfire"
         b1_text = "Rest"
         b2_text = "Level Up"
-        
+
         title = font.render(title_text, True, (255, 255, 255))
         b1 = font.render(b1_text, True, (0, 0, 0))
         b2 = font.render(b2_text, True, (0, 0, 0))
         hint = font_small.render("Esc or Right Mouse Button to close", True, (220, 220, 220))
-        
+
         panel_w, panel_h = 420, 280
         panel_x, panel_y = w // 2 - panel_w // 2, h // 2 - panel_h // 2
-        
+
         panel = pygame.Surface((panel_w, panel_h))
         panel.fill((24, 24, 24))
         screen.blit(panel, (panel_x, panel_y))
         screen.blit(title, (panel_x + panel_w // 2 - title.get_width() // 2, panel_y + 20))
-        
+
         btn_w, btn_h = 320, 60
         btn1 = pygame.Rect(panel_x + panel_w // 2 - btn_w // 2, panel_y + 90, btn_w, btn_h)
         btn2 = pygame.Rect(panel_x + panel_w // 2 - btn_w // 2, panel_y + 170, btn_w, btn_h)
-        
-        pygame.draw.rect(screen, (255, 165, 0), btn1, 0, 8) # Orange for Rest
-        pygame.draw.rect(screen, (144, 238, 144), btn2, 0, 8) # Green for Level Up
-        
+
+        pygame.draw.rect(screen, (255, 165, 0), btn1, 0, 8)
+        pygame.draw.rect(screen, (144, 238, 144), btn2, 0, 8)
+
         screen.blit(b1, (btn1.centerx - b1.get_width() // 2, btn1.centery - b1.get_height() // 2))
         screen.blit(b2, (btn2.centerx - b2.get_width() // 2, btn2.centery - b2.get_height() // 2))
         screen.blit(hint, (panel_x + panel_w // 2 - hint.get_width() // 2, panel_y + panel_h - 35))
-        
+
         return btn1, btn2
 
     def handle_menu_mouse(self, player, toast, world, btns, now_ms):
         if not btns or pygame.time.get_ticks() - self.last_interact_time < self.interact_cooldown_ms:
             return
-            
+
         btn1, btn2 = btns
         mx, my = pygame.mouse.get_pos()
         pressed = pygame.mouse.get_pressed()
-        
+
         if pressed[0]:
             self.last_interact_time = now_ms
             if btn1.collidepoint(mx, my):

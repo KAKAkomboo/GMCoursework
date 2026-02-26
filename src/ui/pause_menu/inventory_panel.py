@@ -1,6 +1,7 @@
 import pygame
 from src.core.settings import WHITE
 
+
 class InventoryPanel:
     def __init__(self, screen):
         self.screen = screen
@@ -20,8 +21,11 @@ class InventoryPanel:
 
         pass
 
-    def show(self): self.visible = True
-    def hide(self): self.visible = False
+    def show(self):
+        self.visible = True
+
+    def hide(self):
+        self.visible = False
 
     def draw(self):
         if not self.visible: return

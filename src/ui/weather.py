@@ -2,6 +2,7 @@ import pygame
 import random
 from src.core.settings import screen_width, screen_height
 
+
 class RainDrop:
     def __init__(self, w, h):
         self.w = w
@@ -24,7 +25,9 @@ class RainDrop:
             self.reset()
 
     def draw(self, screen):
-        pygame.draw.line(screen, (150, 150, 180, 100), (self.x, self.y), (self.x + self.wind, self.y + self.length), self.thickness)
+        pygame.draw.line(screen, (150, 150, 180, 100), (self.x, self.y), (self.x + self.wind, self.y + self.length),
+                         self.thickness)
+
 
 class Rain:
     def __init__(self, screen, intensity=100):
@@ -45,6 +48,7 @@ class Rain:
             drop.w = w
             drop.h = h
 
+
 class FogParticle:
     def __init__(self, w, h):
         self.w = w
@@ -64,12 +68,13 @@ class FogParticle:
         self.x += self.speed
         if self.x > self.w + 100:
             self.reset()
-            self.x = -100 # Reset to left side
+            self.x = -100
 
     def draw(self, screen):
         s = pygame.Surface((self.size, self.size), pygame.SRCALPHA)
-        pygame.draw.circle(s, (200, 200, 220, self.alpha), (self.size//2, self.size//2), self.size//2)
+        pygame.draw.circle(s, (200, 200, 220, self.alpha), (self.size // 2, self.size // 2), self.size // 2)
         screen.blit(s, (int(self.x), int(self.y)))
+
 
 class Fog:
     def __init__(self, screen, density=20):

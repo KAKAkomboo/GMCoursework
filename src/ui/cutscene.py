@@ -1,12 +1,13 @@
 import pygame
 
+
 class Cutscene:
     def __init__(self, screen, lines, font_size=32, color=(200, 200, 200), speed=1.5):
         self.screen = screen
         self.lines = lines
         self.font = pygame.font.SysFont("timesnewroman", font_size)
         self.color = color
-        self.speed = speed 
+        self.speed = speed
 
         self.line_index = 0
         self.char_index = 0.0
@@ -37,7 +38,7 @@ class Cutscene:
             self.char_index += self.speed * (dt / 16.0)
         else:
             self.is_line_complete = True
-        
+
         return True
 
     def draw(self):
@@ -45,7 +46,7 @@ class Cutscene:
             return
 
         self.screen.fill((0, 0, 0))
-        
+
         current_line_text = self.lines[self.line_index]
         visible_text = current_line_text[:int(self.char_index)]
 
@@ -61,7 +62,7 @@ class Cutscene:
         lines = []
         current_line = []
         max_width = self.screen.get_width() * 0.8
-        
+
         for word in words:
             test_line = ' '.join(current_line + [word])
             w, h = self.font.size(test_line)
@@ -74,7 +75,7 @@ class Cutscene:
 
         total_height = len(lines) * self.font.get_height()
         start_y = (self.screen.get_height() - total_height) // 2
-        
+
         for i, line in enumerate(lines):
             surf = self.font.render(line, True, self.color)
             rect = surf.get_rect(center=(self.screen.get_width() // 2, start_y + i * self.font.get_height()))

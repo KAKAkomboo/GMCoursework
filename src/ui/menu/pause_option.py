@@ -1,6 +1,7 @@
 import pygame
 from src.core.settings import screen_width, screen_height
 
+
 class PauseOption:
     def __init__(self, screen):
         self.screen = screen
@@ -20,7 +21,7 @@ class PauseOption:
         self.items = ["Toggle Fullscreen", "Back"]
         self.selected_index = 0
         self.item_rects = []
-        
+
         self.recalculate_layout()
 
     def recalculate_layout(self):
@@ -33,7 +34,8 @@ class PauseOption:
 
         self.slider_w = 300
         self.slider_h = 4
-        self.slider_rect = pygame.Rect(self.panel_x + (self.panel_w - self.slider_w) // 2, self.panel_y + 150, self.slider_w, self.slider_h)
+        self.slider_rect = pygame.Rect(self.panel_x + (self.panel_w - self.slider_w) // 2, self.panel_y + 150,
+                                       self.slider_w, self.slider_h)
         self.knob_radius = 10
 
         self.item_rects = []
@@ -65,7 +67,8 @@ class PauseOption:
         self.screen.blit(panel, (self.panel_x, self.panel_y))
 
         pygame.draw.rect(self.screen, (100, 100, 100), (self.panel_x, self.panel_y, self.panel_w, self.panel_h), 2)
-        pygame.draw.rect(self.screen, (50, 50, 50), (self.panel_x + 4, self.panel_y + 4, self.panel_w - 8, self.panel_h - 8), 1)
+        pygame.draw.rect(self.screen, (50, 50, 50),
+                         (self.panel_x + 4, self.panel_y + 4, self.panel_w - 8, self.panel_h - 8), 1)
 
         title = self.font_title.render("Options", True, (200, 200, 200))
         title_rect = title.get_rect(center=(current_w // 2, self.panel_y + 50))
@@ -92,18 +95,18 @@ class PauseOption:
             rect = self.item_rects[i]
             is_hovered = rect.collidepoint(mouse_pos)
             is_selected = (i == self.selected_index)
-            
+
             color = (150, 150, 150)
             if is_selected or is_hovered:
                 color = (255, 255, 255)
                 pygame.draw.circle(self.screen, (200, 50, 50), (rect.left - 20, rect.centery), 4)
-            
+
             text = self.font_item.render(item, True, color)
             self.screen.blit(text, rect)
 
     def handle_ev(self, events):
         if not self.visible: return None
-        
+
         action = None
         mouse_pos = pygame.mouse.get_pos()
 
@@ -116,24 +119,28 @@ class PauseOption:
                     self.music_volume = max(0.0, min(1.0, rel))
                     try:
                         pygame.mixer.music.set_volume(self.music_volume)
-                    except: pass
+                    except:
+                        pass
 
                 for i, rect in enumerate(self.item_rects):
                     if rect.collidepoint(event.pos):
                         self.selected_index = i
-                        if i == 0: return "toggle_fullscreen"
-                        elif i == 1: return "back"
+                        if i == 0:
+                            return "toggle_fullscreen"
+                        elif i == 1:
+                            return "back"
 
             elif event.type == pygame.MOUSEBUTTONUP and event.button == 1:
                 self.dragging = False
-            
+
             elif event.type == pygame.MOUSEMOTION:
                 if self.dragging:
                     rel = (event.pos[0] - self.slider_rect.x) / float(self.slider_rect.w)
                     self.music_volume = max(0.0, min(1.0, rel))
                     try:
                         pygame.mixer.music.set_volume(self.music_volume)
-                    except: pass
+                    except:
+                        pass
 
                 for i, rect in enumerate(self.item_rects):
                     if rect.collidepoint(event.pos):
@@ -146,15 +153,21 @@ class PauseOption:
                     self.selected_index = (self.selected_index + 1) % len(self.items)
                 elif event.key == pygame.K_LEFT:
                     self.music_volume = max(0.0, self.music_volume - 0.1)
-                    try: pygame.mixer.music.set_volume(self.music_volume)
-                    except: pass
+                    try:
+                        pygame.mixer.music.set_volume(self.music_volume)
+                    except:
+                        pass
                 elif event.key == pygame.K_RIGHT:
                     self.music_volume = min(1.0, self.music_volume + 0.1)
-                    try: pygame.mixer.music.set_volume(self.music_volume)
-                    except: pass
+                    try:
+                        pygame.mixer.music.set_volume(self.music_volume)
+                    except:
+                        pass
                 elif event.key == pygame.K_RETURN:
-                    if self.selected_index == 0: return "toggle_fullscreen"
-                    elif self.selected_index == 1: return "back"
+                    if self.selected_index == 0:
+                        return "toggle_fullscreen"
+                    elif self.selected_index == 1:
+                        return "back"
                 elif event.key == pygame.K_ESCAPE:
                     return "back"
 
