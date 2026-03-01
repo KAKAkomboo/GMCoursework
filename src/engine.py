@@ -14,7 +14,7 @@ from entities.enemies.shantak import Shantak
 from entities.friendly_npc import NPC
 from entities.base_npc import FriendlyNPC
 from world.level_manager import Map
-from src.core.settings import tile_size
+from src.core.settings import tile_size, ENEMIES_ENABLED
 
 
 class BloodParticle:
@@ -81,6 +81,8 @@ class Game:
         self.friendly_npcs.append(elder)
 
     def spawn_enemies(self):
+        if not ENEMIES_ENABLED:
+            return
 
         self.enemies.add(DeepOne(self, (18, 28)))
         self.enemies.add(DeepOne(self, (22, 32)))
@@ -194,4 +196,5 @@ class Game:
 
     def respawn_enemies(self):
         self.enemies.empty()
-        self.spawn_enemies()
+        if ENEMIES_ENABLED:
+            self.spawn_enemies()

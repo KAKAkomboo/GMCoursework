@@ -26,6 +26,8 @@ Primary_font = pygame.font.SysFont("georgia", 24)
 
 tile_size = 32
 
+ENEMIES_ENABLED = False
+
 NPC_SPEED = 1
 NPC_DIALOG_DISTANCE = 100
 DIALOG_BOX_COLOR = (50, 50, 50)

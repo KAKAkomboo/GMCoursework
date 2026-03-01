@@ -57,16 +57,20 @@ class Map:
                     pass
             return self.create_texture(fallback_color)
 
-        self.textures[0] = get_texture("src/assets/textures/ground/water.png", (20, 30, 70))
-        self.textures[1] = get_texture("src/assets/textures/ground/grass.png", (50, 60, 40))
-        self.textures[2] = get_texture("src/assets/textures/blocks/wood.png", (130, 110, 90))
-        self.textures[3] = get_texture("src/assets/textures/ground/path.png", (80, 70, 60))
-        self.textures[4] = get_texture("src/assets/textures/ground/wather_grass.png", (30, 45, 55))
+        self.textures[0] = get_texture("src/assets/images/textures/ground/water.png", (20, 30, 70))
+        self.textures[1] = get_texture("src/assets/images/textures/ground/grass.png", (50, 60, 40))
+        self.textures[2] = get_texture("src/assets/images/textures/ground/wood.png", (130, 110, 90))
+        self.textures[3] = get_texture("src/assets/images/textures/ground/path.png", (80, 70, 60))
+        self.textures[4] = get_texture("src/assets/images/textures/ground/wather_grass.png", (30, 45, 55))
+        self.textures[5] = get_texture("src/assets/images/textures/ground/wood_aside.png", (20, 30, 70))
 
-        self.textures[5] = self.create_texture((20, 50, 20))
-        self.textures[6] = self.create_texture((100, 80, 60))
+        self.textures[6] = self.create_texture((20, 50, 20))
+        self.textures[7] = self.create_texture((100, 80, 60))
 
-        self.textures[9] = self.create_texture((255, 0, 255))
+        self.textures[8] = self.create_texture((255, 0, 255))
+
+        # Ensure there is a texture for tile type 9 (used by triggers/checkpoints). Use a visible fallback color.
+        self.textures[9] = self.create_texture((200, 150, 50))
 
     def create_texture(self, color):
         s = pygame.Surface((tile_size, tile_size))
@@ -108,12 +112,12 @@ class Map:
             for x in range(start_col, end_col):
 
                 water_tile = self.layer_water[y][x]
-                screen.blit(self.textures[water_tile.type], (x * tile_size - camera_x, y * tile_size - camera_y))
+                screen.blit(self.textures.get(water_tile.type, self.textures.get(0)), (x * tile_size - camera_x, y * tile_size - camera_y))
 
                 ground_tile = self.layer_ground[y][x]
                 if ground_tile:
-                    screen.blit(self.textures[ground_tile.type], (x * tile_size - camera_x, y * tile_size - camera_y))
+                    screen.blit(self.textures.get(ground_tile.type, self.textures.get(0)), (x * tile_size - camera_x, y * tile_size - camera_y))
 
                 obj_tile = self.layer_objects[y][x]
                 if obj_tile:
-                    screen.blit(self.textures[obj_tile.type], (x * tile_size - camera_x, y * tile_size - camera_y))
+                    screen.blit(self.textures.get(obj_tile.type, self.textures.get(0)), (x * tile_size - camera_x, y * tile_size - camera_y))
