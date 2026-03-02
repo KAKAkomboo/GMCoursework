@@ -15,26 +15,35 @@ class Tile:
 class Map:
     def __init__(self, map_data_dict=None):
         if map_data_dict:
-            self.layer_water = [[Tile(cell) for cell in row] for row in map_data_dict["water"]]
+            self.height_tiles = len(map_data_dict["water"])
+            self.width_tiles = len(map_data_dict["water"][0]) if self.height_tiles > 0 else 0
+
+            self.layer_water = []
+            for y in range(self.height_tiles):
+                row = map_data_dict["water"][y] if y < len(map_data_dict["water"]) else []
+                new_row = [Tile(row[x]) if x < len(row) else Tile(0) for x in range(self.width_tiles)]
+                self.layer_water.append(new_row)
 
             self.layer_ground = []
-            for row in map_data_dict["ground"]:
-                new_row = []
-                for cell in row:
-                    new_row.append(Tile(cell) if cell is not None else None)
+            for y in range(self.height_tiles):
+                row = map_data_dict["ground"][y] if y < len(map_data_dict["ground"]) else []
+                new_row = [Tile(cell) if cell is not None and x < len(row) else None for x, cell in enumerate(row)]
+                new_row = new_row[:self.width_tiles] + [None] * (self.width_tiles - len(new_row))
                 self.layer_ground.append(new_row)
+            while len(self.layer_ground) < self.height_tiles:
+                self.layer_ground.append([None] * self.width_tiles)
+
 
             self.layer_objects = []
-            for row in map_data_dict["objects"]:
-                new_row = []
-                for cell in row:
-                    new_row.append(Tile(cell) if cell is not None else None)
+            for y in range(self.height_tiles):
+                row = map_data_dict["objects"][y] if y < len(map_data_dict["objects"]) else []
+                new_row = [Tile(cell) if cell is not None and x < len(row) else None for x, cell in enumerate(row)]
+                new_row = new_row[:self.width_tiles] + [None] * (self.width_tiles - len(new_row))
                 self.layer_objects.append(new_row)
+            while len(self.layer_objects) < self.height_tiles:
+                self.layer_objects.append([None] * self.width_tiles)
 
-            self.width_tiles = len(self.layer_water[0])
-            self.height_tiles = len(self.layer_water)
         else:
-
             self.width_tiles = 20
             self.height_tiles = 20
             self.layer_water = [[Tile(0) for _ in range(self.width_tiles)] for _ in range(self.height_tiles)]
@@ -79,12 +88,13 @@ class Map:
         return s
 
     def is_walkable(self, x, y):
-        tile_x = int(x)
-        tile_y = int(y)
+        tile_x = int(x // tile_size)
+        tile_y = int(y // tile_size)
         if not (0 <= tile_x < self.width_tiles and 0 <= tile_y < self.height_tiles):
             return False
 
-        if self.layer_objects[tile_y][tile_x]:
+        obj_tile = self.layer_objects[tile_y][tile_x]
+        if obj_tile and obj_tile.type != 0:
             return False
 
         ground_tile = self.layer_ground[tile_y][tile_x]
@@ -94,8 +104,8 @@ class Map:
         return False
 
     def check_trigger(self, x, y):
-        tile_x = int(x)
-        tile_y = int(y)
+        tile_x = int(x // tile_size)
+        tile_y = int(y // tile_size)
         if 0 <= tile_x < self.width_tiles and 0 <= tile_y < self.height_tiles:
             ground_tile = self.layer_ground[tile_y][tile_x]
             if ground_tile and ground_tile.type == 9:
@@ -112,12 +122,13 @@ class Map:
             for x in range(start_col, end_col):
 
                 water_tile = self.layer_water[y][x]
-                screen.blit(self.textures.get(water_tile.type, self.textures.get(0)), (x * tile_size - camera_x, y * tile_size - camera_y))
+                if water_tile and water_tile.type != 0:
+                    screen.blit(self.textures.get(water_tile.type, self.textures.get(0)), (x * tile_size - camera_x, y * tile_size - camera_y))
 
                 ground_tile = self.layer_ground[y][x]
-                if ground_tile:
+                if ground_tile and ground_tile.type != 0:
                     screen.blit(self.textures.get(ground_tile.type, self.textures.get(0)), (x * tile_size - camera_x, y * tile_size - camera_y))
 
                 obj_tile = self.layer_objects[y][x]
-                if obj_tile:
+                if obj_tile and obj_tile.type != 0:
                     screen.blit(self.textures.get(obj_tile.type, self.textures.get(0)), (x * tile_size - camera_x, y * tile_size - camera_y))
