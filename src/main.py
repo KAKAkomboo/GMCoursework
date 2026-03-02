@@ -1,5 +1,5 @@
 import pygame
-from src.core.settings import screen_width, screen_height, tile_size
+from src.core.settings import screen_resolutions, current_resolution_index, tile_size
 from ui.menu.main_option import MainOption
 from ui.menu.pause_option import PauseOption
 from ui.menu.menu import Menu
@@ -20,13 +20,13 @@ from src.ui.elements.death_screen import DeathScreen
 from src.world.locations.port import map_data as port_map
 from src.world.locations.village import map_data as village_map
 from src.world.level_manager import Map
+import src.core.settings as settings
 
 pygame.init()
 if not pygame.display.get_init():
     pygame.display.init()
 
-initial_screen_width = 1280
-initial_screen_height = 720
+initial_screen_width, initial_screen_height = settings.screen_resolutions[settings.current_resolution_index]
 
 
 def safe_set_mode(size, flags=0):
@@ -248,6 +248,12 @@ while running:
         if action == "back":
             current_state = "menu"
             main_option.hide()
+        elif action == "change_resolution":
+            settings.current_resolution_index = (settings.current_resolution_index + 1) % len(settings.screen_resolutions)
+            new_width, new_height = settings.screen_resolutions[settings.current_resolution_index]
+            new_screen = safe_set_mode((new_width, new_height), pygame.RESIZABLE)
+            update_screen_references(new_screen)
+            main_option.recalculate_layout()
         elif action == "game_options":
             current_state = "game_options"
             previous_state = "main_options"

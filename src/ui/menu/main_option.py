@@ -1,5 +1,5 @@
 import pygame
-from src.core.settings import screen_width, screen_height
+import src.core.settings as settings
 
 
 class MainOption:
@@ -18,6 +18,7 @@ class MainOption:
             "Game Options",
             "Brightness",
             "Key Settings",
+            "Resolution",
             "Network Settings",
             "PC Settings",
             "Back"
@@ -38,7 +39,12 @@ class MainOption:
         start_y = self.panel_y + 100
         spacing = 60
         for i, item in enumerate(self.items):
-            text = self.font_item.render(item, True, (255, 255, 255))
+            if item == "Resolution":
+                w, h = settings.screen_resolutions[settings.current_resolution_index]
+                text_str = f"Resolution: {w}x{h}"
+            else:
+                text_str = item
+            text = self.font_item.render(text_str, True, (255, 255, 255))
             rect = text.get_rect(center=(current_screen_width // 2, start_y + i * spacing))
             self.item_rects.append(rect)
 
@@ -83,7 +89,12 @@ class MainOption:
 
                 pygame.draw.circle(self.screen, (200, 50, 50), (rect.left - 20, rect.centery), 4)
 
-            text = self.font_item.render(item, True, color)
+            if item == "Resolution":
+                w, h = settings.screen_resolutions[settings.current_resolution_index]
+                text_str = f"Resolution: {w}x{h}"
+            else:
+                text_str = item
+            text = self.font_item.render(text_str, True, color)
             self.screen.blit(text, rect)
 
     def handle_ev(self, events):
@@ -98,7 +109,8 @@ class MainOption:
                     if rect.collidepoint(event.pos):
                         self.selected_index = i
                         if self.items[i] == "Back": return "back"
-
+                        if self.items[i] == "Resolution":
+                            return "change_resolution"
                         return self.items[i].lower().replace(" ", "_")
 
             elif event.type == pygame.MOUSEMOTION:
@@ -113,6 +125,8 @@ class MainOption:
                     self.selected_index = (self.selected_index + 1) % len(self.items)
                 elif event.key == pygame.K_RETURN:
                     if self.items[self.selected_index] == "Back": return "back"
+                    if self.items[self.selected_index] == "Resolution":
+                        return "change_resolution"
                     return self.items[self.selected_index].lower().replace(" ", "_")
                 elif event.key == pygame.K_ESCAPE:
                     return "back"

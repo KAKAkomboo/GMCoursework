@@ -2,8 +2,10 @@ import pygame
 
 pygame.init()
 
-screen_width = 1540
-screen_height = 800
+screen_resolutions = [(800, 600), (1024, 768), (1280, 720), (1540, 800), (1920, 1080)]
+current_resolution_index = 3
+
+screen_width, screen_height = screen_resolutions[current_resolution_index]
 SCREEN = pygame.display.set_mode((screen_width, screen_height))
 
 fps = 60
