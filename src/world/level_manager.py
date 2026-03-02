@@ -78,7 +78,6 @@ class Map:
 
         self.textures[8] = self.create_texture((255, 0, 255))
 
-        # Ensure there is a texture for tile type 9 (used by triggers/checkpoints). Use a visible fallback color.
         self.textures[9] = self.create_texture((200, 150, 50))
 
     def create_texture(self, color):
@@ -88,8 +87,9 @@ class Map:
         return s
 
     def is_walkable(self, x, y):
-        tile_x = int(x // tile_size)
-        tile_y = int(y // tile_size)
+        tile_x = int(x)
+        tile_y = int(y)
+
         if not (0 <= tile_x < self.width_tiles and 0 <= tile_y < self.height_tiles):
             return False
 
@@ -98,14 +98,14 @@ class Map:
             return False
 
         ground_tile = self.layer_ground[tile_y][tile_x]
-        if ground_tile:
-            return ground_tile.type in [1, 2, 3, 9]
+        if ground_tile is None:
+            return False
 
-        return False
+        return ground_tile.type in [1, 2, 3, 9]
 
     def check_trigger(self, x, y):
-        tile_x = int(x // tile_size)
-        tile_y = int(y // tile_size)
+        tile_x = int(x)
+        tile_y = int(y)
         if 0 <= tile_x < self.width_tiles and 0 <= tile_y < self.height_tiles:
             ground_tile = self.layer_ground[tile_y][tile_x]
             if ground_tile and ground_tile.type == 9:
@@ -113,17 +113,16 @@ class Map:
         return False
 
     def draw(self, screen, camera_x, camera_y):
-        start_col = max(0, camera_x // tile_size)
-        end_col = min(self.width_tiles, (camera_x + screen.get_width()) // tile_size + 2)
-        start_row = max(0, camera_y // tile_size)
-        end_row = min(self.height_tiles, (camera_y + screen.get_height()) // tile_size + 2)
+        start_col = max(0, int(camera_x // tile_size))
+        end_col = min(self.width_tiles, int((camera_x + screen.get_width()) // tile_size) + 2)
+        start_row = max(0, int(camera_y // tile_size))
+        end_row = min(self.height_tiles, int((camera_y + screen.get_height()) // tile_size) + 2)
 
         for y in range(start_row, end_row):
             for x in range(start_col, end_col):
-
+                
                 water_tile = self.layer_water[y][x]
-                if water_tile and water_tile.type != 0:
-                    screen.blit(self.textures.get(water_tile.type, self.textures.get(0)), (x * tile_size - camera_x, y * tile_size - camera_y))
+                screen.blit(self.textures.get(water_tile.type, self.textures.get(0)), (x * tile_size - camera_x, y * tile_size - camera_y))
 
                 ground_tile = self.layer_ground[y][x]
                 if ground_tile and ground_tile.type != 0:
