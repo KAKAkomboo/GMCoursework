@@ -90,12 +90,14 @@ except Exception:
 for cp in checkpoints:
     cp.set_sounds(save_sound, level_sound)
 
-cutscene_text = [
-    "Світ змінився.",
-    "Нічні тіні поглинули спокій містечка, а шепіт стародавніх легенд став реальністю.",
-    "Твоє завдання — розкрити правду, доки не стало запізно."
+cutscene_scenes = [
+    {"text": "1866 рік. Світ потопає у хвилі незрозумілого насильства.", "image": "src/assets/images/cutscenes/1.jpg"},
+    {"text": "Таємничий культ, що поклоняється кальмароподібному божеству, поширює своє безумство.", "image": "src/assets/images/cutscenes/2.jpg"},
+    {"text": "Острів Грейт-Вас, штат Мен. Тут масово зникає молодь, а місцева поліція безсила.", "image": "src/assets/images/cutscenes/3.jpg"},
+    {"text": "Громада закрита, доказів немає. Я — детектив-доброволець, моя мета — знайти істину.", "image": "src/assets/images/cutscenes/4.jpg"},
+    {"text": "Я зберу матеріали для офіційної влади. Це мій шлях крізь тінь Грейт-Вас.", "image": "src/assets/images/cutscenes/5.jpg"}
 ]
-intro_cutscene = Cutscene(screen, cutscene_text)
+intro_cutscene = Cutscene(screen, cutscene_scenes)
 
 current_state = "menu"
 previous_state = None
