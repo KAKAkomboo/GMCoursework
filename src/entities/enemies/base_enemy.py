@@ -96,7 +96,7 @@ class BaseEnemy(pygame.sprite.Sprite):
     def die(self):
         self.alive = False
         self.kill()
-        self.game.player.add_currency(50)
+        self.game.player.add_currency(5000)
 
     def step_dodge(self):
         now = pygame.time.get_ticks()

@@ -17,7 +17,6 @@ for y in range(height):
     for x in range(width):
         if y < coast_y:
             layer_ground[y][x] = 1
-        # Берегова лінія
         elif y == coast_y:
             layer_ground[y][x] = 4
 
@@ -49,7 +48,7 @@ building_h = 8
 
 for y in range(building_y, building_y + building_h):
     for x in range(building_x, building_x + building_w):
-        layer_objects[y][x] = 7 # Код будівлі
+        layer_objects[y][x] = 7
 
 
 boat_x = road_x + 3
