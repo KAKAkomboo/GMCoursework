@@ -1,6 +1,7 @@
 import pygame
 import math
 import random
+from src.core.settings import tile_size
 
 
 class BaseEnemy(pygame.sprite.Sprite):
@@ -9,7 +10,7 @@ class BaseEnemy(pygame.sprite.Sprite):
         self.game = game
         self.pos = pygame.math.Vector2(pos)
         self.image = pygame.Surface(size, pygame.SRCALPHA)
-        self.rect = self.image.get_rect(center=self.pos)
+        self.rect = self.image.get_rect(center=(self.pos.x * tile_size, self.pos.y * tile_size))
 
         self.max_health = health
         self.health = health
@@ -37,7 +38,7 @@ class BaseEnemy(pygame.sprite.Sprite):
         self.update_timers(dt)
         self.run_ai(dt)
 
-        self.rect.center = self.pos
+        self.rect.center = (self.pos.x * tile_size, self.pos.y * tile_size)
 
     def run_ai(self, dt):
         player_pos = pygame.math.Vector2(self.game.player.x, self.game.player.y)

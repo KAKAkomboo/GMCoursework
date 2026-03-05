@@ -21,6 +21,7 @@ from src.world.locations.port import map_data as port_map
 from src.world.locations.village import map_data as village_map
 from src.world.level_manager import Map
 import src.core.settings as settings
+from src.entities.enemies.men_of_leng import ManOfLeng
 
 pygame.init()
 if not pygame.display.get_init():
@@ -111,9 +112,9 @@ def load_map(map_name, entry_point="default"):
     if map_name == "port":
         new_map_data = port_map
         if entry_point == "from_village":
-            spawn_x, spawn_y = 20, 2
+            spawn_x, spawn_y = 32, 2
         else:
-            spawn_x, spawn_y = 20, 35
+            spawn_x, spawn_y = 32, 30
 
     elif map_name == "village":
         new_map_data = village_map
@@ -131,7 +132,12 @@ def load_map(map_name, entry_point="default"):
     game.player.target_y = spawn_y
 
     game.enemies.empty()
-    game.spawn_enemies()
+
+    if map_name == "village":
+        enemy = ManOfLeng(game, (25, 25))
+        game.enemies.add(enemy)
+    elif map_name == "port":
+        pass
 
     toast.show(f"Entered {map_name.capitalize()}", 2000)
 
@@ -229,6 +235,7 @@ while running:
 
         if not intro_cutscene.update(real_dt):
             current_state = "game"
+            load_map("port")
 
         intro_cutscene.draw()
 
